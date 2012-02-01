@@ -5,23 +5,31 @@ copyright: see below
 
 //======================================================================
 //
-//  Copyright (c) 1999-2001 David Lichteblau
+//  Copyright (c) 1999-2012 David Lichteblau and Dylan Hackers
 //  All rights reserved.
-// 
-//  Use and copying of this software and preparation of derivative
-//  works based on this software are permitted, including commercial
-//  use, provided that the following conditions are observed:
-// 
-//  1. This copyright notice must be retained in full on any copies
-//     and on appropriate parts of any derivative works. (Other names
-//     and years may be added, so long as no existing ones are removed.)
-// 
-//  This software is made available "as is".  Neither the authors nor
-//  Carnegie Mellon University make any warranty about the software,
-//  its performance, or its conformity to any specification.
-// 
-//  Bug reports, questions, comments, and suggestions should be sent by
-//  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
+//
+//  Permission is hereby granted, free of charge, to any person obtaining
+//  a copy of this software and associated documentation files (the
+//  "Software"), to deal in the Software without restriction, including
+//  without limitation the rights to use, copy, modify, merge, publish,
+//  distribute, sublicense, and/or sell copies of the Software, and to
+//  permit persons to whom the Software is furnished to do so, subject to
+//  the following conditions:
+//
+//  The above copyright notice and this permission notice shall be
+//  included in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+//  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+//  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+//  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
+//
+//  A copy of this license may be obtained here:
+//  https://raw.github.com/dylan-lang/opendylan/master/License.txt
 //
 //======================================================================
 
