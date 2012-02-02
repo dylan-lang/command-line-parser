@@ -1,5 +1,6 @@
-library: command-line-parser
-files: library
-       command-line-parser
-       parsers
-       defargparser
+library:      command-line-parser
+target-type:  dll
+files:        library
+              command-line-parser
+              parsers
+              defargparser
