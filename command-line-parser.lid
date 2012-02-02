@@ -1,5 +1,5 @@
 library: command-line-parser
-files: command-line-parser-exports
+files: library
        command-line-parser
        parsers
        defargparser
