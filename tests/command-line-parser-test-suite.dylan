@@ -5,19 +5,19 @@ synopsis: Test suite for the command-line-parser  library.
 //
 //  Copyright (c) 1998 Eric Kidd
 //  All rights reserved.
-// 
+//
 //  Use and copying of this software and preparation of derivative
 //  works based on this software are permitted, including commercial
 //  use, provided that the following conditions are observed:
-// 
+//
 //  1. This copyright notice must be retained in full on any copies
 //     and on appropriate parts of any derivative works. (Other names
 //     and years may be added, so long as no existing ones are removed.)
-// 
+//
 //  This software is made available "as is".  Neither the authors nor
 //  Carnegie Mellon University make any warranty about the software,
 //  its performance, or its conformity to any specification.
-// 
+//
 //  Bug reports, questions, comments, and suggestions should be sent by
 //  E-mail to the Internet address "gd-bugs@gwydiondylan.org".
 //
@@ -30,7 +30,7 @@ synopsis: Test suite for the command-line-parser  library.
 // Now in libraries/utilities/command-line-parser/tests
 // Hannes Mehnert 2007.02.23
 
-define suite command-line-parser-test-suite 
+define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
   test argument-list-parser-test;
   test defargparser-test;
@@ -43,38 +43,38 @@ define function parse (#rest argv)
   let parser = make(<argument-list-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option-parser-by-type(parser,
-			    <simple-option-parser>,
-			    long-options: #("verbose"),
-			    short-options: #("v"),
-			    negative-long-options: #("quiet"),
-			    negative-short-options: #("q"),
-			    default: #t);
+                            <simple-option-parser>,
+                            long-options: #("verbose"),
+                            short-options: #("v"),
+                            negative-long-options: #("quiet"),
+                            negative-short-options: #("q"),
+                            default: #t);
   add-option-parser-by-type(parser,
-			    <simple-option-parser>,
-			    long-options: #("foo"),
-			    short-options: #("f"),
-			    negative-long-options: #("no-foo"),
-			    negative-short-options: #("B"),
-			    default: #f);
+                            <simple-option-parser>,
+                            long-options: #("foo"),
+                            short-options: #("f"),
+                            negative-long-options: #("no-foo"),
+                            negative-short-options: #("B"),
+                            default: #f);
   add-option-parser-by-type(parser,
-			    <parameter-option-parser>,
-			    long-options: #("quux"),
-			    short-options: #("Q"));
+                            <parameter-option-parser>,
+                            long-options: #("quux"),
+                            short-options: #("Q"));
   add-option-parser-by-type(parser,
-			    <optional-parameter-option-parser>,
-			    long-options: #("optimize"),
-			    short-options: #("O"));
+                            <optional-parameter-option-parser>,
+                            long-options: #("optimize"),
+                            short-options: #("O"));
   add-option-parser-by-type(parser,
-			    <repeated-parameter-option-parser>,
-			    long-options: #("warning"),
-			    short-options: #("W"));
+                            <repeated-parameter-option-parser>,
+                            long-options: #("warning"),
+                            short-options: #("W"));
   add-option-parser-by-type(parser,
-			    <keyed-option-parser>,
-			    long-options: #("define"),
-			    short-options: #("D"));
+                            <keyed-option-parser>,
+                            long-options: #("define"),
+                            short-options: #("D"));
   values(parser, parse-arguments(parser, argv))
 end function parse;
-  
+
 define test argument-list-parser-test ()
   let (parser, parse-result) = parse("--frobozz");
   check-equal("parse-arguments returns #f for an unparsable command line",
