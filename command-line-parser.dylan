@@ -70,6 +70,45 @@ copyright: see below
 //         and the syntax for specifying "syntax" and docstring is bizarre at
 //         best.  --cgay 2006.11.27
 
+// TODO(cgay): documentation!
+
+// TODO(cgay): tests!
+
+// TODO(cgay): <choice-option>: --foo=a|b|c (#f as choice means option
+// value is optional?)
+
+// TODO(cgay): Add type: option to all parsers that determines how to
+// parse the inputs.  Validate that the provided default: argument is
+// an instance of the type and give a good error.  Make extensible.
+
+// TODO(cgay): Rename just about everything to be less verbose:
+//   *-option-parser* => *-option*
+//   <foo-parameter-option-parser> => <foo-option>
+//   option-value-by-long-name => option-value (takes long or short name)
+//   add-option-parser-by-type => add-option(parser, #key ...)
+//   <simple-option-parser> => <flag-option>
+
+// TODO(cgay): long-optionS => long-name, short-optionS => short-name.
+// Can allow a list of names, but 99% of the time people just want to
+// give a single name for each option, so a string should work.
+
+// TODO(cgay): Automatic support for --help, with a way to rename or
+// disable the option.  Includes improvements to print-synopsis such
+// as supporting %prog, %default, %choices, etc. and displaying the
+// option type.
+
+// TODO(cgay): Add support for metavar: as in Python's optparse.  It
+// determines what to display after the option name.  (Currently
+// nothing at all is displayed!)
+
+// TODO(cgay): This error sucks: "<unknown-option>" is not present as
+// a key for {<string-table>: size 12}.  How about "<unknown-option>
+// is not a recognized command-line option."  See next item.
+
+// TODO(cgay): Export usage-error and <usage-error> after fixing them
+// up.  These are duplicated in testworks, so use them there.
+
+
 
 //======================================================================
 //  <argument-list-parser>
@@ -172,7 +211,7 @@ end;
 //======================================================================
 
 define abstract open primary class <option-parser> (<object>)
-  // Information used by <option-list-parser>
+  // Information used by <argument-list-parser>
   slot long-option-names :: <list>,
     init-keyword: long-options:,
     init-value: #();
