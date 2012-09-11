@@ -86,8 +86,8 @@ define module command-line-parser
   export
     <argument-list-parser>,
     regular-arguments,
-    add-option-parser,
-    add-option-parser-by-type,
+    add-option,
+    add-option-by-type,
     parse-arguments,
     option-present?-by-long-name,
     option-value-by-long-name,

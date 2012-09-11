@@ -82,10 +82,7 @@ copyright: see below
 // an instance of the type and give a good error.  Make extensible.
 
 // TODO(cgay): Rename just about everything to be less verbose:
-//   <foo-parameter-option-parser> => <foo-option>
 //   option-value-by-long-name => option-value (takes long or short name)
-//   add-option-parser-by-type => add-option(parser, #key ...)
-//   <simple-option-parser> => <flag-option>
 
 // TODO(cgay): long-optionS => long-name, short-optionS => short-name.
 // Can allow a list of names, but 99% of the time people just want to
@@ -106,6 +103,9 @@ copyright: see below
 
 // TODO(cgay): Export usage-error and <usage-error> after fixing them
 // up.  These are duplicated in testworks, so use them there.
+
+// TODO(cgay): Get rid of <optional-parameter-option> and make it an
+// init-arg on <parameter-option> instead.
 
 
 
@@ -131,7 +131,7 @@ define open class <argument-list-parser> (<object>)
     make(<stretchy-vector> /* of: <string> */);
 end class <argument-list-parser>;
 
-define function add-option-parser
+define function add-option
     (args-parser :: <argument-list-parser>, option :: <option>)
  => ()
   local method add-to-table(table, items, value) => ()
@@ -151,7 +151,7 @@ define function add-option-parser
                  option.short-option-names,
                  #t);
   end if;
-end function add-option-parser;
+end function add-option;
 
 define function option-parser-by-long-name
     (parser :: <argument-list-parser>, long-name :: <string>)
@@ -238,13 +238,11 @@ end method reset-option;
 define open generic parse-option
     (option :: <option>, args :: <argument-list-parser>) => ();
 
-define function add-option-parser-by-type
-    (parser :: <argument-list-parser>,
-     class :: <class>,
-     #rest keys)
+define function add-option-by-type
+    (parser :: <argument-list-parser>, class :: <class>, #rest keys)
  => ()
-  add-option-parser(parser, apply(make, class, keys));
-end function add-option-parser-by-type;
+  add-option(parser, apply(make, class, keys));
+end function add-option-by-type;
 
 
 //======================================================================

@@ -257,7 +257,7 @@ end macro;
 //   - (defargparser-class) a class definition for `?name'
 //
 //   - (defargparser-init) initialize methods that add our option
-//     parsers (held in slots named `.*-parser') using add-option-parser
+//     parsers (held in slots named `.*-parser') using add-option
 //
 //   - (defargparser-accessors) accessors that ask the parsers for the
 //     values that were found
@@ -319,7 +319,7 @@ define macro defargparser-init
   adders:
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
        [?docstrings:*], ?initargs:*] ... }
-      => { add-option-parser(instance, ?option ## "-parser" (instance)); ... }
+      => { add-option(instance, ?option ## "-parser" (instance)); ... }
     { [?class:name, ?regular-arguments:name] ... }
       => {  ... }
     { (?usage:*) ... }

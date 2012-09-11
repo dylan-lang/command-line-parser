@@ -50,36 +50,36 @@ end suite;
 define function parse (#rest argv)
   let parser = make(<argument-list-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
-  add-option-parser-by-type(parser,
-                            <flag-option>,
-                            long-options: #("verbose"),
-                            short-options: #("v"),
-                            negative-long-options: #("quiet"),
-                            negative-short-options: #("q"),
-                            default: #t);
-  add-option-parser-by-type(parser,
-                            <flag-option>,
-                            long-options: #("foo"),
-                            short-options: #("f"),
-                            negative-long-options: #("no-foo"),
-                            negative-short-options: #("B"),
-                            default: #f);
-  add-option-parser-by-type(parser,
-                            <parameter-option>,
-                            long-options: #("quux"),
-                            short-options: #("Q"));
-  add-option-parser-by-type(parser,
-                            <optional-parameter-option>,
-                            long-options: #("optimize"),
-                            short-options: #("O"));
-  add-option-parser-by-type(parser,
-                            <repeated-parameter-option>,
-                            long-options: #("warning"),
-                            short-options: #("W"));
-  add-option-parser-by-type(parser,
-                            <keyed-option>,
-                            long-options: #("define"),
-                            short-options: #("D"));
+  add-option-by-type(parser,
+                     <flag-option>,
+                     long-options: #("verbose"),
+                     short-options: #("v"),
+                     negative-long-options: #("quiet"),
+                     negative-short-options: #("q"),
+                     default: #t);
+  add-option-by-type(parser,
+                     <flag-option>,
+                     long-options: #("foo"),
+                     short-options: #("f"),
+                     negative-long-options: #("no-foo"),
+                     negative-short-options: #("B"),
+                     default: #f);
+  add-option-by-type(parser,
+                     <parameter-option>,
+                     long-options: #("quux"),
+                     short-options: #("Q"));
+  add-option-by-type(parser,
+                     <optional-parameter-option>,
+                     long-options: #("optimize"),
+                     short-options: #("O"));
+  add-option-by-type(parser,
+                     <repeated-parameter-option>,
+                     long-options: #("warning"),
+                     short-options: #("W"));
+  add-option-by-type(parser,
+                     <keyed-option>,
+                     long-options: #("define"),
+                     short-options: #("D"));
   values(parser, parse-arguments(parser, argv))
 end function parse;
 

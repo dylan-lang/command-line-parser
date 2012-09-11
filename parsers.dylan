@@ -185,7 +185,6 @@ end method parse-option;
 //  Counter-examples:
 //    -z 3, --zip 3, --zip3
 
-// TODO(cgay): Get rid of this and make it an init-arg on <parameter-option>.
 define class <optional-parameter-option> (<option>)
 end class <optional-parameter-option>;
 
