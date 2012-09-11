@@ -93,7 +93,7 @@ define module command-line-parser
     option-value-by-long-name,
     print-synopsis,
 
-    <simple-option>,
+    <flag-option>,
     <parameter-option>,
     <repeated-parameter-option>,
     <optional-parameter-option>,

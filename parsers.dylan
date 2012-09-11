@@ -76,7 +76,7 @@ end method negative-option?;
 
 
 //======================================================================
-//  <simple-option>
+//  <flag-option>
 //======================================================================
 //  Simple options represent Boolean values. They may default to #t or
 //  #f, and exist in both positive and negative forms ("--foo" and
@@ -86,28 +86,28 @@ end method negative-option?;
 //  Examples:
 //    -q, -v, --quiet, --verbose
 
-define class <simple-option> (<negative-option>)
+define class <flag-option> (<negative-option>)
   // Information used to reset our parse state.
   slot option-default-value :: <boolean>,
     init-keyword: default:,
     init-value: #f;
-end class <simple-option>;
+end class <flag-option>;
 
 define method initialize
-    (parser :: <simple-option>, #next next-method, #key, #all-keys)
+    (parser :: <flag-option>, #next next-method, #key, #all-keys)
  => ()
   next-method();
   parser.option-might-have-parameters? := #f;
 end method initialize;
 
 define method reset-option
-    (parser :: <simple-option>, #next next-method) => ()
+    (parser :: <flag-option>, #next next-method) => ()
   next-method();
   parser.option-value := parser.option-default-value;
 end;
 
 define method parse-option
-    (parser :: <simple-option>,
+    (parser :: <flag-option>,
      arg-parser :: <argument-list-parser>)
  => ()
   let option = get-argument-token(arg-parser);

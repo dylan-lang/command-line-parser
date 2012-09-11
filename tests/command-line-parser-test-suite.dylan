@@ -51,14 +51,14 @@ define function parse (#rest argv)
   let parser = make(<argument-list-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option-parser-by-type(parser,
-                            <simple-option>,
+                            <flag-option>,
                             long-options: #("verbose"),
                             short-options: #("v"),
                             negative-long-options: #("quiet"),
                             negative-short-options: #("q"),
                             default: #t);
   add-option-parser-by-type(parser,
-                            <simple-option>,
+                            <flag-option>,
                             long-options: #("foo"),
                             short-options: #("f"),
                             negative-long-options: #("no-foo"),

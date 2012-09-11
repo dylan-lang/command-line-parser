@@ -82,7 +82,6 @@ copyright: see below
 // an instance of the type and give a good error.  Make extensible.
 
 // TODO(cgay): Rename just about everything to be less verbose:
-//   *-option-parser* => *-option*
 //   <foo-parameter-option-parser> => <foo-option>
 //   option-value-by-long-name => option-value (takes long or short name)
 //   add-option-parser-by-type => add-option(parser, #key ...)
