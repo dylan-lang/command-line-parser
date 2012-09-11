@@ -51,33 +51,33 @@ define function parse (#rest argv)
   let parser = make(<argument-list-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option-parser-by-type(parser,
-                            <simple-option-parser>,
+                            <simple-option>,
                             long-options: #("verbose"),
                             short-options: #("v"),
                             negative-long-options: #("quiet"),
                             negative-short-options: #("q"),
                             default: #t);
   add-option-parser-by-type(parser,
-                            <simple-option-parser>,
+                            <simple-option>,
                             long-options: #("foo"),
                             short-options: #("f"),
                             negative-long-options: #("no-foo"),
                             negative-short-options: #("B"),
                             default: #f);
   add-option-parser-by-type(parser,
-                            <parameter-option-parser>,
+                            <parameter-option>,
                             long-options: #("quux"),
                             short-options: #("Q"));
   add-option-parser-by-type(parser,
-                            <optional-parameter-option-parser>,
+                            <optional-parameter-option>,
                             long-options: #("optimize"),
                             short-options: #("O"));
   add-option-parser-by-type(parser,
-                            <repeated-parameter-option-parser>,
+                            <repeated-parameter-option>,
                             long-options: #("warning"),
                             short-options: #("W"));
   add-option-parser-by-type(parser,
-                            <keyed-option-parser>,
+                            <keyed-option>,
                             long-options: #("define"),
                             short-options: #("D"));
   values(parser, parse-arguments(parser, argv))
@@ -135,7 +135,7 @@ define argument-parser <defargparser-test-parser> ()
     long: "other-option";
   option log-filename,
     "", "Log file pathname",
-    kind: <parameter-option-parser>,
+    kind: <parameter-option>,
     long: "log",
     short: "l";
   regular-arguments file-names;

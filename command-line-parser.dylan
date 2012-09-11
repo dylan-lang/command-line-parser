@@ -47,7 +47,7 @@ copyright: see below
 //  To parse a list of arguments, you need to perform the following steps:
 //
 //    1. Create an <argument-list-parser>.
-//    2. Create individual <option-parser>s and attach them to it.
+//    2. Create individual <option>s and attach them to it.
 //    3. Tell the <argument-list-parser> to parse a list of strings.
 //    4. Call option-value or option-value-long-name to retrieve your
 //       option data.
@@ -116,11 +116,11 @@ copyright: see below
 
 define open class <argument-list-parser> (<object>)
   // Retained across calls to parse-arguments.
-  slot option-parsers :: <stretchy-vector> /* of <option-parser> */ =
-    make(<stretchy-vector> /* of <option-parser> */);
-  constant slot option-short-name-map :: <string-table> /* of <option-parser> */ =
+  slot option-parsers :: <stretchy-vector> /* of <option> */ =
+    make(<stretchy-vector> /* of <option> */);
+  constant slot option-short-name-map :: <string-table> /* of <option> */ =
     make(<string-table>);
-  constant slot option-long-name-map :: <string-table> /* of <option-parser> */ =
+  constant slot option-long-name-map :: <string-table> /* of <option> */ =
     make(<string-table>);
   constant slot parameter-options :: <string-table> /* of <boolean> */ =
     make(<string-table>);
@@ -133,36 +133,36 @@ define open class <argument-list-parser> (<object>)
 end class <argument-list-parser>;
 
 define function add-option-parser
-    (args-parser :: <argument-list-parser>, opt-parser :: <option-parser>)
+    (args-parser :: <argument-list-parser>, option :: <option>)
  => ()
   local method add-to-table(table, items, value) => ()
           for (item in items)
             table[item] := value;
           end for;
         end method add-to-table;
-  args-parser.option-parsers := add!(args-parser.option-parsers, opt-parser);
+  args-parser.option-parsers := add!(args-parser.option-parsers, option);
   add-to-table(args-parser.option-long-name-map,
-               opt-parser.long-option-names,
-               opt-parser);
+               option.long-option-names,
+               option);
   add-to-table(args-parser.option-short-name-map,
-               opt-parser.short-option-names,
-               opt-parser);
-  if (opt-parser.option-might-have-parameters?)
+               option.short-option-names,
+               option);
+  if (option.option-might-have-parameters?)
     add-to-table(args-parser.parameter-options,
-                 opt-parser.short-option-names,
+                 option.short-option-names,
                  #t);
   end if;
 end function add-option-parser;
 
 define function option-parser-by-long-name
     (parser :: <argument-list-parser>, long-name :: <string>)
- => (value :: <option-parser>)
+ => (option :: <option>)
   parser.option-long-name-map[long-name];
 end;
 
 define function option-present?-by-long-name
     (parser :: <argument-list-parser>, long-name :: <string>)
- => (value :: <boolean>)
+ => (present? :: <boolean>)
   option-parser-by-long-name(parser, long-name).option-present?;
 end;
 
@@ -207,10 +207,10 @@ end;
 
 
 //======================================================================
-//  <option-parser>
+//  <option>
 //======================================================================
 
-define abstract open primary class <option-parser> (<object>)
+define abstract open primary class <option> (<object>)
   // Information used by <argument-list-parser>
   slot long-option-names :: <list>,
     init-keyword: long-options:,
@@ -227,17 +227,17 @@ define abstract open primary class <option-parser> (<object>)
     init-value: #f;
   slot option-value :: <object>,
     init-value: #f;
-end class <option-parser>;
+end class <option>;
 
-define open generic reset-option-parser(parser :: <option-parser>) => ();
+define open generic reset-option(option :: <option>) => ();
 
-define method reset-option-parser(parser :: <option-parser>) => ()
-  parser.option-present? := #f;
-  parser.option-value := #f;
-end method reset-option-parser;
+define method reset-option(option :: <option>) => ()
+  option.option-present? := #f;
+  option.option-value := #f;
+end method reset-option;
 
 define open generic parse-option
-    (opt :: <option-parser>, args :: <argument-list-parser>) => ();
+    (option :: <option>, args :: <argument-list-parser>) => ();
 
 define function add-option-parser-by-type
     (parser :: <argument-list-parser>,
@@ -406,7 +406,7 @@ end function tokenize-args;
 
 define function get-option-parser
     (parsers :: <string-table>, key :: <string>)
- => (parser :: <option-parser>)
+ => (option :: <option>)
   let parser = element(parsers, key, default: #f);
   unless (parser)
     usage-error();
@@ -420,7 +420,7 @@ define function parse-arguments
   block ()
     parser.tokens.size := 0;
     parser.regular-arguments.size := 0;
-    do(reset-option-parser, parser.option-parsers);
+    do(reset-option, parser.option-parsers);
 
     // Split our args around '--' and chop them around '='.
     let (clean-args, extra-args) = split-args(argv);

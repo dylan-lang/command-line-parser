@@ -81,14 +81,14 @@ copyright: see below
 //     Notes:
 //       - Default superclass is <argument-list-parser>.
 //
-//       - Default option class is <simple-option-parser>.
+//       - Default option class is <simple-option>.
 //
 //         You can specify an alternative class with the kind: keyword:
-//           option logfile, kind: <parameter-option-parser>;
+//           option logfile, kind: <parameter-option>;
 //
 //       - For the options, default values are possible:
 //           option logfile = "default.log",
-//             kind: <parameter-option-parser>,
+//             kind: <parameter-option>,
 //             long: "logfile", short: "L";
 //
 //       - You may want to specify types for an option:
@@ -281,7 +281,7 @@ define macro defargparser-class
   slots:
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
        [?docstrings:*], #rest ?initargs:*,
-       #key ?kind:expression = <simple-option-parser>,
+       #key ?kind:expression = <simple-option>,
             ?short:expression = #(),
             ?long:expression = #(),
        #all-keys] ... }

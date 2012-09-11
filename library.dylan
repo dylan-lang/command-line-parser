@@ -50,8 +50,8 @@ define module option-parser-protocol
       peek-argument-token,
       option-parser-by-long-name,
 
-    // <option-parser>
-    <option-parser>,
+    // <option>
+    <option>,
       option-present?,
       option-value,
       short-option-names, short-option-names-setter,
@@ -60,10 +60,10 @@ define module option-parser-protocol
       option-default-value, option-default-value-setter,
       option-might-have-parameters?, option-might-have-parameters?-setter,
       option-value-setter,
-    reset-option-parser,
+    reset-option,
     parse-option,
 
-    <negative-option-parser>,
+    <negative-option>,
     negative-option?,
 
     <argument-token>,
@@ -93,11 +93,11 @@ define module command-line-parser
     option-value-by-long-name,
     print-synopsis,
 
-    <simple-option-parser>,
-    <parameter-option-parser>,
-    <repeated-parameter-option-parser>,
-    <optional-parameter-option-parser>,
-    <keyed-option-parser>;
+    <simple-option>,
+    <parameter-option>,
+    <repeated-parameter-option>,
+    <optional-parameter-option>,
+    <keyed-option>;
 
   use streams;
   use format;

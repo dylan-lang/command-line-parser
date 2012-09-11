@@ -35,22 +35,22 @@ copyright: see below
 
 
 //======================================================================
-//  <negative-option-parser>
+//  <negative-option>
 //======================================================================
 //  Certain options may occur in positive and negative forms. This
 //  absract class takes care of the details.
 
-define abstract open primary class <negative-option-parser> (<option-parser>)
+define abstract open primary class <negative-option> (<option>)
   constant slot negative-long-options :: <list> /* of: <string> */,
     init-keyword: negative-long-options:,
     init-value: #();
   constant slot negative-short-options :: <list> /* of: <string> */,
     init-keyword: negative-short-options:,
     init-value: #();
-end class <negative-option-parser>;
+end class <negative-option>;
 
 define method initialize
-    (parser :: <negative-option-parser>, #next next-method, #key, #all-keys)
+    (parser :: <negative-option>, #next next-method, #key, #all-keys)
  => ()
   next-method();
   // We keep our own local lists of option names, because we support two
@@ -64,7 +64,7 @@ define method initialize
 end method;
 
 define method negative-option?
-    (parser :: <negative-option-parser>, token :: <option-token>)
+    (parser :: <negative-option>, token :: <option-token>)
  => (negative? :: <boolean>)
   let negatives =
     select (token by instance?)
@@ -76,7 +76,7 @@ end method negative-option?;
 
 
 //======================================================================
-//  <simple-option-parser>
+//  <simple-option>
 //======================================================================
 //  Simple options represent Boolean values. They may default to #t or
 //  #f, and exist in both positive and negative forms ("--foo" and
@@ -86,28 +86,28 @@ end method negative-option?;
 //  Examples:
 //    -q, -v, --quiet, --verbose
 
-define class <simple-option-parser> (<negative-option-parser>)
+define class <simple-option> (<negative-option>)
   // Information used to reset our parse state.
   slot option-default-value :: <boolean>,
     init-keyword: default:,
     init-value: #f;
-end class <simple-option-parser>;
+end class <simple-option>;
 
 define method initialize
-    (parser :: <simple-option-parser>, #next next-method, #key, #all-keys)
+    (parser :: <simple-option>, #next next-method, #key, #all-keys)
  => ()
   next-method();
   parser.option-might-have-parameters? := #f;
 end method initialize;
 
-define method reset-option-parser
-    (parser :: <simple-option-parser>, #next next-method) => ()
+define method reset-option
+    (parser :: <simple-option>, #next next-method) => ()
   next-method();
   parser.option-value := parser.option-default-value;
 end;
 
 define method parse-option
-    (parser :: <simple-option-parser>,
+    (parser :: <simple-option>,
      arg-parser :: <argument-list-parser>)
  => ()
   let option = get-argument-token(arg-parser);
@@ -116,7 +116,7 @@ end method parse-option;
 
 
 //======================================================================
-//  <parameter-option-parser>
+//  <parameter-option>
 //======================================================================
 //  Parameter options represent a single parameter with a string value.
 //  If the option appears more than once, the rightmost value takes
@@ -125,11 +125,11 @@ end method parse-option;
 //  Examples:
 //    -cred, -c=red, -c = red, --color red, --color=red
 
-define class <parameter-option-parser> (<option-parser>)
-end class <parameter-option-parser>;
+define class <parameter-option> (<option>)
+end class <parameter-option>;
 
 define method parse-option
-    (parser :: <parameter-option-parser>,
+    (parser :: <parameter-option>,
      arg-parser :: <argument-list-parser>)
  => ()
   get-argument-token(arg-parser);
@@ -141,7 +141,7 @@ end method parse-option;
 
 
 //======================================================================
-//  <repeated-parameter-option-parser>
+//  <repeated-parameter-option>
 //======================================================================
 //  Similar to the above, but these options may appear more than once.
 //  The final value is a deque of parameter values in the order they
@@ -150,17 +150,17 @@ end method parse-option;
 //  Examples:
 //    -wall, -w=all, -w = all, --warnings all, --warnings=all
 
-define class <repeated-parameter-option-parser> (<option-parser>)
-end class <repeated-parameter-option-parser>;
+define class <repeated-parameter-option> (<option>)
+end class <repeated-parameter-option>;
 
-define method reset-option-parser
-    (parser :: <repeated-parameter-option-parser>, #next next-method) => ()
+define method reset-option
+    (parser :: <repeated-parameter-option>, #next next-method) => ()
   next-method();
   parser.option-value := make(<deque> /* of: <string> */);
 end;
 
 define method parse-option
-    (parser :: <repeated-parameter-option-parser>,
+    (parser :: <repeated-parameter-option>,
      arg-parser :: <argument-list-parser>)
  => ()
   get-argument-token(arg-parser);
@@ -172,9 +172,9 @@ end method parse-option;
 
 
 //======================================================================
-//  <optional-parameter-option-parser>
+//  <optional-parameter-option>
 //======================================================================
-//  Similar to <parameter-option-parser>, but the parameter is optional.
+//  Similar to <parameter-option>, but the parameter is optional.
 //  It must directly follow the option with no intervening whitespace,
 //  or follow an "=" token. The value is #f if the option never appears,
 //  #t if the option appears but the parameter does not, and the value
@@ -185,14 +185,15 @@ end method parse-option;
 //  Counter-examples:
 //    -z 3, --zip 3, --zip3
 
-define class <optional-parameter-option-parser> (<option-parser>)
-end class <optional-parameter-option-parser>;
+// TODO(cgay): Get rid of this and make it an init-arg on <parameter-option>.
+define class <optional-parameter-option> (<option>)
+end class <optional-parameter-option>;
 
 define method parse-option
-    (parser :: <optional-parameter-option-parser>,
+    (parser :: <optional-parameter-option>,
      arg-parser :: <argument-list-parser>)
  => ()
-  let option = get-argument-token(arg-parser);
+  let token = get-argument-token(arg-parser);
   let next = argument-tokens-remaining?(arg-parser) &
     peek-argument-token(arg-parser);
 
@@ -201,8 +202,8 @@ define method parse-option
       instance?(next, <equals-token>) =>
         get-argument-token(arg-parser);
         get-argument-token(arg-parser).token-value;
-      (instance?(option, <short-option-token>)
-         & option.tightly-bound-to-next-token?) =>
+      (instance?(token, <short-option-token>)
+         & token.tightly-bound-to-next-token?) =>
         get-argument-token(arg-parser).token-value;
       otherwise =>
         #t;
@@ -211,7 +212,7 @@ end method parse-option;
 
 
 //======================================================================
-//  <keyed-option-parser>
+//  <keyed-option>
 //======================================================================
 //  These are a bit obscure. The best example is d2c's '-D' flag, which
 //  allows users to #define a C preprocessor name. The final value is a
@@ -225,17 +226,17 @@ end method parse-option;
 //  Examples:
 //    -Dkey, -Dkey=value, -D key = value, --define key = value
 
-define class <keyed-option-parser> (<option-parser>)
-end class <keyed-option-parser>;
+define class <keyed-option> (<option>)
+end class <keyed-option>;
 
-define method reset-option-parser
-    (parser :: <keyed-option-parser>, #next next-method) => ()
+define method reset-option
+    (parser :: <keyed-option>, #next next-method) => ()
   next-method();
   parser.option-value := make(<string-table>);
 end;
 
 define method parse-option
-    (parser :: <keyed-option-parser>,
+    (parser :: <keyed-option>,
      arg-parser :: <argument-list-parser>)
  => ()
   get-argument-token(arg-parser);
