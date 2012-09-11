@@ -150,3 +150,10 @@ define test defargparser-test ()
   check-true("Regular arguments are empty.",
              empty?(parser.file-names));
 end test defargparser-test;
+
+// Prevent warnings for unused defs.
+begin
+  log-filename;
+  print-defargparser-test-synopsis;
+  other;
+end;
