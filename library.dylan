@@ -48,8 +48,12 @@ define module option-parser-protocol
       argument-tokens-remaining?,
       get-argument-token,
       peek-argument-token,
+      option-parser-by-long-name,
 
     // <option-parser>
+    <option-parser>,
+      option-present?,
+      option-value,
       short-option-names, short-option-names-setter,
       long-option-names, long-option-names-setter,
       option-description, option-description-setter,
@@ -81,18 +85,13 @@ define module command-line-parser
 
   export
     <argument-list-parser>,
-      regular-arguments,
+    regular-arguments,
     add-option-parser,
     add-option-parser-by-type,
     parse-arguments,
-    option-parser-by-long-name,
     option-present?-by-long-name,
     option-value-by-long-name,
     print-synopsis,
-
-    <option-parser>,
-      option-present?,
-      option-value,
 
     <simple-option-parser>,
     <parameter-option-parser>,
