@@ -61,7 +61,7 @@ copyright: see below
 //             (add-dylan-keyword 'dyl-parameterized-definition-words
 //                                "argument-parser")
 //             (add-dylan-keyword 'dyl-other-keywords "option")
-//             (add-dylan-keyword 'dyl-other-keywords "regular-arguments")
+//             (add-dylan-keyword 'dyl-other-keywords "positional-options")
 //             (add-dylan-keyword 'dyl-other-keywords "synopsis")))
 //
 //
@@ -102,8 +102,8 @@ copyright: see below
 //
 //       - Remaining keywords are handed as initargs to make.
 //
-//       - Besides ``option'' there is also ``regular-arguments'':
-//           regular-arguments file-names;
+//       - Besides ``option'' there is also ``positional-options'':
+//           positional-options file-names;
 //
 //
 // Parsing an argument list
@@ -179,7 +179,7 @@ copyright: see below
 //
 //  - Transform human-readable `?options' into patterns of the form
 //      [option-name, type, [default-if-any], #rest initargs]
-//      [regular-arguments-name]
+//      [positional-options-name]
 //      (synopsis-fn-name, usage, description)
 //
 //  - Hand it over to `defargparser-rec'.
@@ -202,7 +202,7 @@ define macro argument-parser-definer
     { option ?:name :: ?value-type:expression = ?default:expression,
         ?initargs:*; ... }
       => { [?name, ?value-type, [?default], ?initargs] ... }
-    { regular-arguments ?:name; ... }
+    { positional-options ?:name; ... }
       => { [?name] ... }
     { synopsis ?fn:name, #rest ?keys:*,
       #key ?usage:expression = #f, ?description:expression = #f,
@@ -300,7 +300,7 @@ define macro defargparser-class
                                      end select,
                       ?initargs);
                end; ... }
-    { [?class:name, ?regular-arguments:name] ... }
+    { [?class:name, ?positional-options:name] ... }
       => {  ... }
     { (?usage:*) ... }
       => { ... }
@@ -320,7 +320,7 @@ define macro defargparser-init
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
        [?docstrings:*], ?initargs:*] ... }
       => { add-option(instance, ?option ## "-parser" (instance)); ... }
-    { [?class:name, ?regular-arguments:name] ... }
+    { [?class:name, ?positional-options:name] ... }
       => {  ... }
     { (?usage:*) ... }
       => { ... }
@@ -350,10 +350,10 @@ define macro defargparser-accessors
                ?default;
              end if;
            end method ?option; ... }
-    { [?class:name, ?regular-arguments:name] ... }
-      => { define method ?regular-arguments (arglistparser :: ?class)
+    { [?class:name, ?positional-options:name] ... }
+      => { define method ?positional-options (arglistparser :: ?class)
             => (value :: <sequence>);
-             regular-arguments(arglistparser);
+             positional-options(arglistparser);
            end method; ... }
     { (?usage:*) ... }
       => { ... }
@@ -418,7 +418,7 @@ define macro defargparser-synopsis
             ?long:expression = #f,
        #all-keys] ... }
       => { print-option(?short, ?long, ?syntax, ?description); ... }
-    { [?class:name, ?regular-arguments:name] ... }
+    { [?class:name, ?positional-options:name] ... }
       => { ... }
     { } => { }
 end macro;

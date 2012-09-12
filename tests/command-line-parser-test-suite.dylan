@@ -117,7 +117,8 @@ define test argument-list-parser-test ()
               #("warning-value"));
   let defines = get-option-value(parser, "define");
   check-equal("key is defined as 'value'", defines["key"], "value");
-  check-true("regular arguments are empty", empty?(parser.regular-arguments));
+  check-true("positional options are empty",
+             empty?(parser.positional-options));
 
 end test argument-list-parser-test;
 
@@ -138,7 +139,7 @@ define argument-parser <defargparser-test-parser> ()
     kind: <parameter-option>,
     long: "log",
     short: "l";
-  regular-arguments file-names;
+  positional-options file-names;
 end argument-parser;
 
 
@@ -147,7 +148,7 @@ define test defargparser-test ()
   parse-arguments(parser, #());
   check-false("Verbose flag is false if not supplied.",
               parser.verbose?);
-  check-true("Regular arguments are empty.",
+  check-true("Positional options are empty.",
              empty?(parser.file-names));
 end test defargparser-test;
 

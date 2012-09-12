@@ -68,7 +68,7 @@ define module option-parser-protocol
 
     <argument-token>,
       token-value,
-    <regular-argument-token>,
+    <positional-option-token>,
     <option-token>,
     <short-option-token>,
       tightly-bound-to-next-token?, // XXX - not implemented fully
@@ -85,7 +85,7 @@ define module command-line-parser
 
   export
     <argument-list-parser>,
-    regular-arguments,
+    positional-options,
     add-option,
     add-option-by-type,
     parse-arguments,
