@@ -44,7 +44,7 @@ end library;
 // Only used when defining new option-parser subclasses.
 define module option-parser-protocol
   create
-    // <argument-list-parser>
+    // <command-line-parser>
       argument-tokens-remaining?,
       get-argument-token,
       peek-argument-token,
@@ -84,7 +84,7 @@ define module command-line-parser
   use option-parser-protocol;
 
   export
-    <argument-list-parser>,
+    <command-line-parser>,
     positional-options,
     add-option,
     add-option-by-type,

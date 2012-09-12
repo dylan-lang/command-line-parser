@@ -40,7 +40,7 @@ synopsis: Test suite for the command-line-parser  library.
 
 define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
-  test argument-list-parser-test;
+  test command-line-parser-test;
   test defargparser-test;
 end suite;
 
@@ -48,7 +48,7 @@ end suite;
 // Create a parser for our standard test argument list, parse the given
 // argument list, return the parser.
 define function parse (#rest argv)
-  let parser = make(<argument-list-parser>);
+  let parser = make(<command-line-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option-by-type(parser,
                      <flag-option>,
@@ -83,7 +83,7 @@ define function parse (#rest argv)
   values(parser, parse-arguments(parser, argv))
 end function parse;
 
-define test argument-list-parser-test ()
+define test command-line-parser-test ()
   let (parser, parse-result) = parse("--frobozz");
   check-equal("parse-arguments returns #f for an unparsable command line",
               parse-result,
@@ -120,7 +120,7 @@ define test argument-list-parser-test ()
   check-true("positional options are empty",
              empty?(parser.positional-options));
 
-end test argument-list-parser-test;
+end test command-line-parser-test;
 
 
 define argument-parser <defargparser-test-parser> ()

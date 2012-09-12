@@ -50,26 +50,26 @@ define abstract open primary class <negative-option> (<option>)
 end class <negative-option>;
 
 define method initialize
-    (parser :: <negative-option>, #next next-method, #key, #all-keys)
+    (option :: <negative-option>, #next next-method, #key, #all-keys)
  => ()
   next-method();
   // We keep our own local lists of option names, because we support two
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
   // list.
-  parser.long-option-names := concatenate(parser.long-option-names,
-                                          parser.negative-long-options);
-  parser.short-option-names := concatenate(parser.short-option-names,
-                                           parser.negative-short-options);
+  option.long-option-names := concatenate(option.long-option-names,
+                                          option.negative-long-options);
+  option.short-option-names := concatenate(option.short-option-names,
+                                           option.negative-short-options);
 end method;
 
 define method negative-option?
-    (parser :: <negative-option>, token :: <option-token>)
+    (option :: <negative-option>, token :: <option-token>)
  => (negative? :: <boolean>)
   let negatives =
     select (token by instance?)
-      <short-option-token> => parser.negative-short-options;
-      <long-option-token> => parser.negative-long-options;
+      <short-option-token> => option.negative-short-options;
+      <long-option-token> => option.negative-long-options;
     end select;
   member?(token.token-value, negatives, test: \=)
 end method negative-option?;
@@ -94,25 +94,24 @@ define class <flag-option> (<negative-option>)
 end class <flag-option>;
 
 define method initialize
-    (parser :: <flag-option>, #next next-method, #key, #all-keys)
+    (option :: <flag-option>, #next next-method, #key, #all-keys)
  => ()
   next-method();
-  parser.option-might-have-parameters? := #f;
+  option.option-might-have-parameters? := #f;
 end method initialize;
 
 define method reset-option
-    (parser :: <flag-option>, #next next-method) => ()
+    (option :: <flag-option>, #next next-method) => ()
   next-method();
-  parser.option-value := parser.option-default-value;
+  option.option-value := option.option-default-value;
 end;
 
 define method parse-option
-    (parser :: <flag-option>,
-     arg-parser :: <argument-list-parser>)
+    (option :: <flag-option>, parser :: <command-line-parser>)
  => ()
-  let option = get-argument-token(arg-parser);
-  parser.option-value := ~negative-option?(parser, option);
-end method parse-option;
+  let token = get-argument-token(parser);
+  option.option-value := ~negative-option?(option, token);
+end;
 
 
 //======================================================================
@@ -129,14 +128,13 @@ define class <parameter-option> (<option>)
 end class <parameter-option>;
 
 define method parse-option
-    (parser :: <parameter-option>,
-     arg-parser :: <argument-list-parser>)
+    (option :: <parameter-option>, parser :: <command-line-parser>)
  => ()
-  get-argument-token(arg-parser);
-  if (instance?(peek-argument-token(arg-parser), <equals-token>))
-    get-argument-token(arg-parser);
+  get-argument-token(parser);
+  if (instance?(peek-argument-token(parser), <equals-token>))
+    get-argument-token(parser);
   end if;
-  parser.option-value := get-argument-token(arg-parser).token-value;
+  option.option-value := get-argument-token(parser).token-value;
 end method parse-option;
 
 
@@ -154,20 +152,20 @@ define class <repeated-parameter-option> (<option>)
 end class <repeated-parameter-option>;
 
 define method reset-option
-    (parser :: <repeated-parameter-option>, #next next-method) => ()
+    (option :: <repeated-parameter-option>, #next next-method) => ()
   next-method();
-  parser.option-value := make(<deque> /* of: <string> */);
+  option.option-value := make(<deque> /* of: <string> */);
 end;
 
 define method parse-option
-    (parser :: <repeated-parameter-option>,
-     arg-parser :: <argument-list-parser>)
+    (option :: <repeated-parameter-option>,
+     parser :: <command-line-parser>)
  => ()
-  get-argument-token(arg-parser);
-  if (instance?(peek-argument-token(arg-parser), <equals-token>))
-    get-argument-token(arg-parser);
+  get-argument-token(parser);
+  if (instance?(peek-argument-token(parser), <equals-token>))
+    get-argument-token(parser);
   end if;
-  push-last(parser.option-value, get-argument-token(arg-parser).token-value);
+  push-last(option.option-value, get-argument-token(parser).token-value);
 end method parse-option;
 
 
@@ -189,21 +187,20 @@ define class <optional-parameter-option> (<option>)
 end class <optional-parameter-option>;
 
 define method parse-option
-    (parser :: <optional-parameter-option>,
-     arg-parser :: <argument-list-parser>)
+    (option :: <optional-parameter-option>, parser :: <command-line-parser>)
  => ()
-  let token = get-argument-token(arg-parser);
-  let next = argument-tokens-remaining?(arg-parser) &
-    peek-argument-token(arg-parser);
+  let token = get-argument-token(parser);
+  let next = argument-tokens-remaining?(parser) &
+    peek-argument-token(parser);
 
-  parser.option-value :=
+  option.option-value :=
     case
       instance?(next, <equals-token>) =>
-        get-argument-token(arg-parser);
-        get-argument-token(arg-parser).token-value;
+        get-argument-token(parser);
+        get-argument-token(parser).token-value;
       (instance?(token, <short-option-token>)
          & token.tightly-bound-to-next-token?) =>
-        get-argument-token(arg-parser).token-value;
+        get-argument-token(parser).token-value;
       otherwise =>
         #t;
     end case;
@@ -229,23 +226,23 @@ define class <keyed-option> (<option>)
 end class <keyed-option>;
 
 define method reset-option
-    (parser :: <keyed-option>, #next next-method) => ()
+    (option :: <keyed-option>, #next next-method) => ()
   next-method();
-  parser.option-value := make(<string-table>);
+  option.option-value := make(<string-table>);
 end;
 
 define method parse-option
-    (parser :: <keyed-option>,
-     arg-parser :: <argument-list-parser>)
+    (option :: <keyed-option>,
+     parser :: <command-line-parser>)
  => ()
-  get-argument-token(arg-parser);
-  let key = get-argument-token(arg-parser).token-value;
+  get-argument-token(parser);
+  let key = get-argument-token(parser).token-value;
   let value =
-    if (instance?(peek-argument-token(arg-parser), <equals-token>))
-      get-argument-token(arg-parser);
-      get-argument-token(arg-parser).token-value;
+    if (instance?(peek-argument-token(parser), <equals-token>))
+      get-argument-token(parser);
+      get-argument-token(parser).token-value;
     else
       #t;
     end if;
-  parser.option-value[key] := value;
+  option.option-value[key] := value;
 end method parse-option;

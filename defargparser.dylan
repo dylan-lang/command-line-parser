@@ -79,7 +79,7 @@ copyright: see below
 //         end;
 //
 //     Notes:
-//       - Default superclass is <argument-list-parser>.
+//       - Default superclass is <command-line-parser>.
 //
 //       - Default option class is <flag-option>.
 //
@@ -175,7 +175,7 @@ copyright: see below
 // =======================================
 // Syntax: define argument-parser ?:name (?supers:*) ?options end
 //
-//  - Let `?supers' default to <argument-list-parser>.
+//  - Let `?supers' default to <command-line-parser>.
 //
 //  - Transform human-readable `?options' into patterns of the form
 //      [option-name, type, [default-if-any], #rest initargs]
@@ -188,7 +188,7 @@ copyright: see below
 //
 define macro argument-parser-definer
     { define argument-parser ?:name () ?options end }
-      => { defargparser-rec ?name (<argument-list-parser>) () ?options end }
+      => { defargparser-rec ?name (<command-line-parser>) () ?options end }
     { define argument-parser ?:name (?supers) ?options end }
       => { defargparser-rec ?name (?supers) () ?options end }
 

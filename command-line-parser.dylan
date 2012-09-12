@@ -46,9 +46,9 @@ copyright: see below
 //
 //  To parse a list of options, you need to perform the following steps:
 //
-//    1. Create an <argument-list-parser>.
+//    1. Create an <command-line-parser>.
 //    2. Create individual <option>s and attach them to it.
-//    3. Tell the <argument-list-parser> to parse a list of strings.
+//    3. Tell the <command-line-parser> to parse a list of strings.
 //    4. Call get-option-value to retrieve your option data.
 //    5. Re-use your option parser by calling parse-arguments again, or
 //       just forget about it.
@@ -123,10 +123,10 @@ end;
 
 
 //======================================================================
-//  <argument-list-parser>
+//  <command-line-parser>
 //======================================================================
 
-define open class <argument-list-parser> (<object>)
+define open class <command-line-parser> (<object>)
   // Retained across calls to parse-arguments.
   slot option-parsers :: <stretchy-vector> /* of <option> */ =
     make(<stretchy-vector> /* of <option> */);
@@ -142,10 +142,10 @@ define open class <argument-list-parser> (<object>)
     make(<deque> /* of: <argument-token> */);
   slot positional-options :: <stretchy-vector> /* of: <string> */ =
     make(<stretchy-vector> /* of: <string> */);
-end class <argument-list-parser>;
+end class <command-line-parser>;
 
 define function add-option
-    (args-parser :: <argument-list-parser>, option :: <option>)
+    (args-parser :: <command-line-parser>, option :: <option>)
  => ()
   local method add-to-table(table, items, value) => ()
           for (item in items)
@@ -167,7 +167,7 @@ define function add-option
 end function add-option;
 
 define method find-option
-    (parser :: <argument-list-parser>, name :: <string>)
+    (parser :: <command-line-parser>, name :: <string>)
  => (option :: <option>)
   element(parser.option-long-name-map, name, default: #f)
     | element(parser.option-short-name-map, name, default: #f)
@@ -177,19 +177,19 @@ define method find-option
 end;
 
 define function option-present?-by-long-name
-    (parser :: <argument-list-parser>, long-name :: <string>)
+    (parser :: <command-line-parser>, long-name :: <string>)
  => (present? :: <boolean>)
   find-option(parser, long-name).option-present?
 end;
 
 define function get-option-value
-    (parser :: <argument-list-parser>, name :: <string>)
+    (parser :: <command-line-parser>, name :: <string>)
  => (value :: <object>)
   find-option(parser, name).option-value
 end;
 
 define function add-argument-token
-    (parser :: <argument-list-parser>,
+    (parser :: <command-line-parser>,
      class :: <class>,
      value :: <string>,
      #rest keys, #key, #all-keys)
@@ -198,13 +198,13 @@ define function add-argument-token
 end;
 
 define function argument-tokens-remaining?
-    (parser :: <argument-list-parser>)
+    (parser :: <command-line-parser>)
  => (remaining? :: <boolean>)
   ~parser.tokens.empty?
 end;
 
 define function peek-argument-token
-    (parser :: <argument-list-parser>)
+    (parser :: <command-line-parser>)
  => (token :: false-or(<argument-token>))
   unless (argument-tokens-remaining?(parser))
     usage-error("Ran out of arguments.")
@@ -213,7 +213,7 @@ define function peek-argument-token
 end;
 
 define function get-argument-token
-    (parser :: <argument-list-parser>)
+    (parser :: <command-line-parser>)
  => (token :: false-or(<argument-token>))
   unless (argument-tokens-remaining?(parser))
     usage-error("Ran out of arguments.")
@@ -227,7 +227,7 @@ end;
 //======================================================================
 
 define abstract open primary class <option> (<object>)
-  // Information used by <argument-list-parser>
+  // Information used by <command-line-parser>
   slot long-option-names :: <list>,
     init-keyword: long-options:,
     init-value: #();
@@ -253,10 +253,10 @@ define method reset-option(option :: <option>) => ()
 end method reset-option;
 
 define open generic parse-option
-    (option :: <option>, args :: <argument-list-parser>) => ();
+    (option :: <option>, args :: <command-line-parser>) => ();
 
 define function add-option-by-type
-    (parser :: <argument-list-parser>, class :: <class>, #rest keys)
+    (parser :: <command-line-parser>, class :: <class>, #rest keys)
  => ()
   add-option(parser, apply(make, class, keys));
 end function add-option-by-type;
@@ -343,7 +343,7 @@ end function chop-args;
 
 // Turn a deque of args into an internal deque of tokens.
 define function tokenize-args
-    (parser :: <argument-list-parser>,
+    (parser :: <command-line-parser>,
      args :: <deque> /* of: <string> */)
  => ()
   until (args.empty?)
@@ -406,7 +406,7 @@ define function tokenize-args
 end function tokenize-args;
 
 define function parse-arguments
-    (parser :: <argument-list-parser>, argv :: <sequence>)
+    (parser :: <command-line-parser>, argv :: <sequence>)
  => (success? :: <boolean>)
   block (exit-block)
     parser.tokens.size := 0;
@@ -459,11 +459,11 @@ define function parse-arguments
 end function parse-arguments;
 
 define open generic print-synopsis
- (parser :: <argument-list-parser>, stream :: <stream>, #key);
+ (parser :: <command-line-parser>, stream :: <stream>, #key);
 
 // todo -- Generate the initial "Usage: ..." line as well.
 define method print-synopsis
-    (parser :: <argument-list-parser>,
+    (parser :: <command-line-parser>,
      stream :: <stream>,
      #key usage :: false-or(<string>),
           description :: false-or(<string>))
