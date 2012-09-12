@@ -101,21 +101,21 @@ define test argument-list-parser-test ()
                                      "--warning", "warning-value",
                                      "--define", "key", "=", "value");
   check-equal("verbose is true",
-              option-value-by-long-name(parser, "verbose"),
+              get-option-value(parser, "verbose"),
               #t);
   check-equal("foo has correct value",
-              option-value-by-long-name(parser, "foo"),
+              get-option-value(parser, "foo"),
               #t);
   check-equal("quux has correct value",
-              option-value-by-long-name(parser, "quux"),
+              get-option-value(parser, "quux"),
               "quux-value");
   check-equal("optimize has correct value",
-              option-value-by-long-name(parser, "optimize"),
+              get-option-value(parser, "optimize"),
               "optimize-value");
   check-equal("warning has correct value",
-              option-value-by-long-name(parser, "warning"),
+              get-option-value(parser, "warning"),
               #("warning-value"));
-  let defines = option-value-by-long-name(parser, "define");
+  let defines = get-option-value(parser, "define");
   check-equal("key is defined as 'value'", defines["key"], "value");
   check-true("regular arguments are empty", empty?(parser.regular-arguments));
 

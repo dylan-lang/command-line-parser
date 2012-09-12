@@ -81,9 +81,6 @@ copyright: see below
 // parse the inputs.  Validate that the provided default: argument is
 // an instance of the type and give a good error.  Make extensible.
 
-// TODO(cgay): Rename just about everything to be less verbose:
-//   option-value-by-long-name => option-value (takes long or short name)
-
 // TODO(cgay): long-optionS => long-name, short-optionS => short-name.
 // Can allow a list of names, but 99% of the time people just want to
 // give a single name for each option, so a string should work.
@@ -107,6 +104,24 @@ copyright: see below
 // TODO(cgay): Get rid of <optional-parameter-option> and make it an
 // init-arg on <parameter-option> instead.
 
+
+//======================================================================
+//  Errors
+//======================================================================
+
+define class <option-parser-error> (<format-string-condition>, <error>)
+end;
+
+define class <usage-error> (<option-parser-error>)
+end;
+
+// Making this inline stifles return type warnings.
+define inline function usage-error
+    (format-string :: <string>, #rest format-args) => ()
+  error(make(<usage-error>,
+             format-string: format-string,
+             format-arguments: format-args))
+end;
 
 
 //======================================================================
@@ -153,22 +168,26 @@ define function add-option
   end if;
 end function add-option;
 
-define function option-parser-by-long-name
-    (parser :: <argument-list-parser>, long-name :: <string>)
+define method find-option
+    (parser :: <argument-list-parser>, name :: <string>)
  => (option :: <option>)
-  parser.option-long-name-map[long-name];
+  element(parser.option-long-name-map, name, default: #f)
+    | element(parser.option-short-name-map, name, default: #f)
+    | error(make(<option-parser-error>,
+                 format-string: "Option not found: %=",
+                 format-arguments: name))
 end;
 
 define function option-present?-by-long-name
     (parser :: <argument-list-parser>, long-name :: <string>)
  => (present? :: <boolean>)
-  option-parser-by-long-name(parser, long-name).option-present?;
+  find-option(parser, long-name).option-present?
 end;
 
-define function option-value-by-long-name
-    (parser :: <argument-list-parser>, long-name :: <string>)
+define function get-option-value
+    (parser :: <argument-list-parser>, name :: <string>)
  => (value :: <object>)
-  option-parser-by-long-name(parser, long-name).option-value;
+  find-option(parser, name).option-value
 end;
 
 define function add-argument-token
@@ -190,7 +209,7 @@ define function peek-argument-token
     (parser :: <argument-list-parser>)
  => (token :: false-or(<argument-token>))
   unless (argument-tokens-remaining?(parser))
-    usage-error()
+    usage-error("Ran out of arguments.")
   end;
   parser.tokens[0];
 end;
@@ -199,7 +218,7 @@ define function get-argument-token
     (parser :: <argument-list-parser>)
  => (token :: false-or(<argument-token>))
   unless (argument-tokens-remaining?(parser))
-    usage-error()
+    usage-error("Ran out of arguments.")
   end;
   pop(parser.tokens);
 end;
@@ -274,18 +293,6 @@ end class <equals-token>;
 
 
 //======================================================================
-//  usage-error
-//======================================================================
-
-define class <usage-error> (<error>)
-end class <usage-error>;
-
-define function usage-error () => ()
-  error(make(<usage-error>));
-end;
-
-
-//======================================================================
 //  parse-arguments
 //======================================================================
 
@@ -348,11 +355,10 @@ define function tokenize-args
       // Attempt to get the next argument a little bit early.
       method next-arg() => (arg :: <string>)
         if (~args.empty?)
-          pop(args);
+          pop(args)
         else
-          usage-error();
-          ""                                           // stifle warning
-        end;
+          usage-error("Ran out of arguments.");
+        end
       end method,
 
       // Add a token to our deque
@@ -401,20 +407,10 @@ define function tokenize-args
   end until;
 end function tokenize-args;
 
-define function get-option-parser
-    (parsers :: <string-table>, key :: <string>)
- => (option :: <option>)
-  let parser = element(parsers, key, default: #f);
-  unless (parser)
-    usage-error();
-  end;
-  parser;
-end;
-
 define function parse-arguments
     (parser :: <argument-list-parser>, argv :: <sequence>)
  => (success? :: <boolean>)
-  block ()
+  block (exit-block)
     parser.tokens.size := 0;
     parser.regular-arguments.size := 0;
     do(reset-option, parser.option-parsers);
@@ -436,16 +432,20 @@ define function parse-arguments
                                            token.token-value);
         <short-option-token> =>
           let opt-parser =
-            get-option-parser(parser.option-short-name-map, token.token-value);
+            element(parser.option-short-name-map, token.token-value, default: #f)
+              | exit-block(#f);
           parse-option(opt-parser, parser);
           opt-parser.option-present? := #t;
         <long-option-token> =>
           let opt-parser =
-            get-option-parser(parser.option-long-name-map, token.token-value);
+            element(parser.option-long-name-map, token.token-value, default: #f)
+              | exit-block(#f);
           parse-option(opt-parser, parser);
           opt-parser.option-present? := #t;
         otherwise =>
-          usage-error();
+          error(make(<option-parser-error>,
+                     format-string: "Unrecognized token: %=",
+                     format-arguments: list(token)));
       end select;
     end while;
 
@@ -454,10 +454,10 @@ define function parse-arguments
       parser.regular-arguments := add!(parser.regular-arguments, arg);
     end for;
 
-    #t;
-  exception (<usage-error>)
-    #f;
-  end block;
+    #t
+  exception (<option-parser-error>)
+    #f
+  end block
 end function parse-arguments;
 
 define open generic print-synopsis

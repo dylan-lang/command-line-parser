@@ -48,7 +48,7 @@ define module option-parser-protocol
       argument-tokens-remaining?,
       get-argument-token,
       peek-argument-token,
-      option-parser-by-long-name,
+      find-option,
 
     // <option>
     <option>,
@@ -75,7 +75,7 @@ define module option-parser-protocol
     <long-option-token>,
     <equals-token>,
 
-    usage-error;
+    <option-parser-error>;
 end module;
 
 // Used by most programs.
@@ -90,14 +90,17 @@ define module command-line-parser
     add-option-by-type,
     parse-arguments,
     option-present?-by-long-name,
-    option-value-by-long-name,
+    get-option-value,
     print-synopsis,
 
     <flag-option>,
     <parameter-option>,
     <repeated-parameter-option>,
     <optional-parameter-option>,
-    <keyed-option>;
+    <keyed-option>,
+
+    usage-error,
+    <usage-error>;
 
   use streams;
   use format;
