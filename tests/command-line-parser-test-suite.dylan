@@ -32,7 +32,7 @@ synopsis: Test suite for the command-line-parser  library.
 //======================================================================
 
 // Modified by Carl Gay to use the testworks library and to test
-// defargparser.  Moved from src/tests to libraries/getopt/tests.
+// defcmdline.  Moved from src/tests to libraries/getopt/tests.
 // 2006.11.29
 
 // Now in libraries/utilities/command-line-parser/tests
@@ -41,7 +41,7 @@ synopsis: Test suite for the command-line-parser  library.
 define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
   test command-line-parser-test;
-  test defargparser-test;
+  test defcmdline-test;
 end suite;
 
 
@@ -123,8 +123,8 @@ define test command-line-parser-test ()
 end test command-line-parser-test;
 
 
-define argument-parser <defargparser-test-parser> ()
-  synopsis print-defargparser-test-synopsis,
+define command-line <defcmdline-test-parser> ()
+  synopsis print-defcmdline-test-synopsis,
     usage: "test [options] file...",
     description: "Stupid test program doing nothing with the args.";
   option verbose?,
@@ -140,21 +140,21 @@ define argument-parser <defargparser-test-parser> ()
     long: "log",
     short: "l";
   positional-options file-names;
-end argument-parser;
+end command-line;
 
 
-define test defargparser-test ()
-  let parser = make(<defargparser-test-parser>);
+define test defcmdline-test ()
+  let parser = make(<defcmdline-test-parser>);
   parse-arguments(parser, #());
   check-false("Verbose flag is false if not supplied.",
               parser.verbose?);
   check-true("Positional options are empty.",
              empty?(parser.file-names));
-end test defargparser-test;
+end test defcmdline-test;
 
 // Prevent warnings for unused defs.
 begin
   log-filename;
-  print-defargparser-test-synopsis;
+  print-defcmdline-test-synopsis;
   other;
 end;

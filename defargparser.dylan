@@ -37,7 +37,7 @@ copyright: see below
 // Introduction
 // ============
 //
-// defargparser is a set of macros designed to work on top of Eric Kidd's
+// This is a set of macros designed to work on top of Eric Kidd's
 // command-line-parser library.  The idea is to provide a more readable
 // interface for parser definition and option access.
 //
@@ -45,7 +45,7 @@ copyright: see below
 // Examples
 // ========
 //
-// Below you can find a short overview of defargparser's features.
+// Below you can find a short overview of defcmdline's features.
 // If you are looking for working examples, have a look at
 //   <URL:http://www.inf.fu-berlin.de/~lichtebl/dylan/>
 //
@@ -53,28 +53,28 @@ copyright: see below
 // Emacs
 // =====
 //
-// You will want to edit your .emacs to recognize defargparser macros and
+// You will want to edit your .emacs to recognize defcmdline macros and
 // keywords:
 //
 // (add-hook 'dylan-mode-hook
 //           (lambda ()
 //             (add-dylan-keyword 'dyl-parameterized-definition-words
-//                                "argument-parser")
+//                                "command-line")
 //             (add-dylan-keyword 'dyl-other-keywords "option")
 //             (add-dylan-keyword 'dyl-other-keywords "positional-options")
 //             (add-dylan-keyword 'dyl-other-keywords "synopsis")))
 //
 //
-// Argument parser definition
-// ==========================
+// Command Line definition
+// =======================
 //
-//     Use ``define argument-parser'' to define a new parser class.  This
+//     Use ``define command-line'' to define a new parser class.  This
 //     macro is intended to look similar to ``define class'', but doesn't
 //     define slots as such.  Instead it takes ``option'' clauses.  At
 //     initialisation time of an instance, corresponding option parsers will
 //     be made automatically.
 //
-//         define argument-parser <my-parser> ()
+//         define command-line <my-parser> ()
 //           option verbose?, long: "verbose", short: "v";
 //         end;
 //
@@ -106,10 +106,10 @@ copyright: see below
 //           positional-options file-names;
 //
 //
-// Parsing an argument list
+// Parsing the Command Line
 // ========================
 //
-//     Originally I had macros to make an argument-list parser and do the
+//     Originally I had macros to make a command-line parser and do the
 //     parsing transparently.  It wasn't consistent enough, though, and
 //     therefore I decided to throw out that code for now.
 //
@@ -117,7 +117,7 @@ copyright: see below
 //
 //         define method main (appname, #rest args);
 //           let parser = make(<my-parser>);
-//           parse-arguments(parser, args);
+//           parse-options(parser, args);
 //
 //           // Here we go.
 //         end method main;
@@ -126,16 +126,16 @@ copyright: see below
 // Accessing the options
 // =====================
 //
-//     ``define argument-parser'' defines function to access the options as
+//     ``define command-line'' defines function to access the options as
 //     if they were real slots:
 //
-//         define argument-parser <my-parser> ()
+//         define command-line <my-parser> ()
 //           option verbose?, short: "v";
-//         end argument-parser;
+//         end command-line;
 //
 //         define method main (appname, #rest args);
 //           let parser = make(<my-parser>);
-//           parse-arguments(parser, args);
+//           parse-options(parser, args);
 //
 //           if (parser.verbose?)
 //             ...
@@ -153,13 +153,13 @@ copyright: see below
 //
 //    Suppose you say
 //
-//         define argument-parser <main-parser> ()
+//         define command-line <main-parser> ()
 //           synopsis print-synopsis,
 //             usage: "test [options] file...",
 //             description: "Stupid test program doing nothing with the args.";
 //           option verbose?, "", "Explanation", short: "v", long: "verbose";
 //           option other, "", "foo", long: "other-option";
-//         end argument-parser;
+//         end command-line;
 //
 //    Then print-synopsis(parser, stream) will print something like:
 //
@@ -171,9 +171,9 @@ copyright: see below
 //
 
 
-// Macro ARGUMENT-PARSER-DEFINER--exported
+// Macro COMMAND-LINE-DEFINER--exported
 // =======================================
-// Syntax: define argument-parser ?:name (?supers:*) ?options end
+// Syntax: define command-line ?:name (?supers:*) ?options end
 //
 //  - Let `?supers' default to <command-line-parser>.
 //
@@ -182,15 +182,15 @@ copyright: see below
 //      [positional-options-name]
 //      (synopsis-fn-name, usage, description)
 //
-//  - Hand it over to `defargparser-rec'.
+//  - Hand it over to `defcmdline-rec'.
 //
 // Explanation: I have no idea what that is for.
 //
-define macro argument-parser-definer
-    { define argument-parser ?:name () ?options end }
-      => { defargparser-rec ?name (<command-line-parser>) () ?options end }
-    { define argument-parser ?:name (?supers) ?options end }
-      => { defargparser-rec ?name (?supers) () ?options end }
+define macro command-line-definer
+    { define command-line ?:name () ?options end }
+      => { defcmdline-rec ?name (<command-line-parser>) () ?options end }
+    { define command-line ?:name (?supers) ?options end }
+      => { defcmdline-rec ?name (?supers) () ?options end }
 
   supers:
     { ?super:expression, ... } => { ?super, ... }
@@ -219,61 +219,61 @@ define macro argument-parser-definer
       => { ["", ""], ?realargs }
 end macro;
 
-// Macro DEFARGPARSER-REC--internal
+// Macro DEFCMDLINE-REC--internal
 // ================================
-// Syntax: defargparser-rec ?:name (?supers:*) (?processed:*) ?options end
+// Syntax: defcmdline-rec ?:name (?supers:*) (?processed:*) ?options end
 //
 //   - Start out without `?processed' forms.
 //   - (Recursively) take each `?options' form and add a pair
 //       [?name, ?option]
 //     to `?processed'.
-//   - Finally, pass the `?processed' forms to `defargparser-aux'.
+//   - Finally, pass the `?processed' forms to `defcmdline-aux'.
 //
 // Explanation: The options will be processed by auxiliary rules.
 // However, these need the `?name', which would be available to main
 // rules only.  That's why we need the name/option pairs.
 //
-define macro defargparser-rec
-    { defargparser-rec ?:name (?supers:*) (?processed:*) end }
-      => { defargparser-aux ?name (?supers) ?processed end }
+define macro defcmdline-rec
+    { defcmdline-rec ?:name (?supers:*) (?processed:*) end }
+      => { defcmdline-aux ?name (?supers) ?processed end }
 
-    { defargparser-rec ?:name (?supers:*) (?processed:*) [?option:*] ?rem:* end }
-      => { defargparser-rec ?name (?supers)
+    { defcmdline-rec ?:name (?supers:*) (?processed:*) [?option:*] ?rem:* end }
+      => { defcmdline-rec ?name (?supers)
              (?processed [?name, ?option]) ?rem
            end }
-    { defargparser-rec ?:name (?supers:*) (?processed:*) (?usage:*) ?rem:* end }
-      => { defargparser-rec ?name (?supers)
+    { defcmdline-rec ?:name (?supers:*) (?processed:*) (?usage:*) ?rem:* end }
+      => { defcmdline-rec ?name (?supers)
              ((?usage) ?processed) ?rem
            end }
 end macro;
 
-// Macro DEFARGPARSER-AUX--internal
+// Macro DEFCMDLINE-AUX--internal
 // ================================
-// Syntax: defargparser-aux ?:name (?supers:*) ?options end
+// Syntax: defcmdline-aux ?:name (?supers:*) ?options end
 //
 // Explanation: This is rather staightforward; code generation is
 // performed by auxillary macros that output
 //
-//   - (defargparser-class) a class definition for `?name'
+//   - (defcmdline-class) a class definition for `?name'
 //
-//   - (defargparser-init) initialize methods that add our option
+//   - (defcmdline-init) initialize methods that add our option
 //     parsers (held in slots named `.*-parser') using add-option
 //
-//   - (defargparser-accessors) accessors that ask the parsers for the
+//   - (defcmdline-accessors) accessors that ask the parsers for the
 //     values that were found
 //
-//  - (defargparser-synopsis) a method printing usage information
+//  - (defcmdline-synopsis) a method printing usage information
 //
-define macro defargparser-aux
-    { defargparser-aux ?:name (?supers:*) ?options:* end }
-      => { defargparser-class ?name (?supers) ?options end;
-           defargparser-init ?name ?options end;
-           defargparser-accessors ?name ?options end;
-           defargparser-synopsis ?name ?options end }
+define macro defcmdline-aux
+    { defcmdline-aux ?:name (?supers:*) ?options:* end }
+      => { defcmdline-class ?name (?supers) ?options end;
+           defcmdline-init ?name ?options end;
+           defcmdline-accessors ?name ?options end;
+           defcmdline-synopsis ?name ?options end }
 end macro;
 
-define macro defargparser-class
-    { defargparser-class ?:name (?supers:*) ?slots end }
+define macro defcmdline-class
+    { defcmdline-class ?:name (?supers:*) ?slots end }
       => { define class ?name (?supers)
              ?slots
            end class }
@@ -307,8 +307,8 @@ define macro defargparser-class
     { } => { }
 end macro;
 
-define macro defargparser-init
-    { defargparser-init ?:name ?adders end }
+define macro defcmdline-init
+    { defcmdline-init ?:name ?adders end }
       => { define method initialize (instance :: ?name,
                                      #next next-method, #key, #all-keys)
             => ();
@@ -327,8 +327,8 @@ define macro defargparser-init
     { } => { }
 end macro;
 
-define macro defargparser-accessors
-    { defargparser-accessors ?:name ?accessors end }
+define macro defcmdline-accessors
+    { defcmdline-accessors ?:name ?accessors end }
       => { ?accessors }
 
   accessors:
@@ -360,8 +360,8 @@ define macro defargparser-accessors
     { } => { }
 end macro;
 
-define macro defargparser-synopsis
-    { defargparser-synopsis ?:name
+define macro defcmdline-synopsis
+    { defcmdline-synopsis ?:name
        (?fn:name, ?usage:expression, ?description:expression)
        ?options
       end }
@@ -407,7 +407,7 @@ define macro defargparser-synopsis
              ?options
            end method ?fn; }
 
-    { defargparser-synopsis ?:name ?ignore:* end }
+    { defcmdline-synopsis ?:name ?ignore:* end }
       => { }
 
   options:

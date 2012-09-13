@@ -106,11 +106,11 @@ define module command-line-parser
   use format;
 
   export
-    argument-parser-definer,
-    defargparser-rec,
-    defargparser-aux,
-    defargparser-class,
-    defargparser-init,
-    defargparser-accessors,
-    defargparser-synopsis;
+    command-line-definer,
+    defcmdline-rec,
+    defcmdline-aux,
+    defcmdline-class,
+    defcmdline-init,
+    defcmdline-accessors,
+    defcmdline-synopsis;
 end module;
