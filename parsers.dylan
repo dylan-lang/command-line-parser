@@ -50,7 +50,7 @@ define abstract open primary class <negative-option> (<option>)
 end class <negative-option>;
 
 define method initialize
-    (option :: <negative-option>, #next next-method, #key, #all-keys)
+    (option :: <negative-option>, #key, #all-keys)
  => ()
   next-method();
   // We keep our own local lists of option names, because we support two
@@ -94,14 +94,14 @@ define class <flag-option> (<negative-option>)
 end class <flag-option>;
 
 define method initialize
-    (option :: <flag-option>, #next next-method, #key, #all-keys)
+    (option :: <flag-option>, #key, #all-keys)
  => ()
   next-method();
   option.option-might-have-parameters? := #f;
 end method initialize;
 
 define method reset-option
-    (option :: <flag-option>, #next next-method) => ()
+    (option :: <flag-option>) => ()
   next-method();
   option.option-value := option.option-default-value;
 end;
@@ -152,7 +152,7 @@ define class <repeated-parameter-option> (<option>)
 end class <repeated-parameter-option>;
 
 define method reset-option
-    (option :: <repeated-parameter-option>, #next next-method) => ()
+    (option :: <repeated-parameter-option>) => ()
   next-method();
   option.option-value := make(<deque> /* of: <string> */);
 end;
@@ -226,7 +226,7 @@ define class <keyed-option> (<option>)
 end class <keyed-option>;
 
 define method reset-option
-    (option :: <keyed-option>, #next next-method) => ()
+    (option :: <keyed-option>) => ()
   next-method();
   option.option-value := make(<string-table>);
 end;
