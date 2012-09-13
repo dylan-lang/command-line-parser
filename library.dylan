@@ -66,7 +66,7 @@ define module option-parser-protocol
     <negative-option>,
     negative-option?,
 
-    <argument-token>,
+    <token>,
       token-value,
     <positional-option-token>,
     <option-token>,
