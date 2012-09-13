@@ -50,7 +50,7 @@ copyright: see below
 //    2. Create individual <option>s and attach them to it.
 //    3. Tell the <command-line-parser> to parse a list of strings.
 //    4. Call get-option-value to retrieve your option data.
-//    5. Re-use your option parser by calling parse-arguments again, or
+//    5. Re-use your option parser by calling parse-command-line again, or
 //       just forget about it.
 //
 //  A note about terminology:
@@ -130,7 +130,7 @@ end;
 //======================================================================
 
 define open class <command-line-parser> (<object>)
-  // Retained across calls to parse-arguments.
+  // Retained across calls to parse-command-line.
   slot option-parsers :: <stretchy-vector> /* of <option> */ =
     make(<stretchy-vector> /* of <option> */);
   constant slot option-short-name-map :: <string-table> /* of <option> */ =
@@ -294,7 +294,7 @@ end;
 
 
 //======================================================================
-//  parse-arguments
+//  parse-command-line
 //======================================================================
 
 // Break up our arguments around '--' in the traditional fashion.
@@ -408,7 +408,7 @@ define function tokenize-args
   end until;
 end function tokenize-args;
 
-define function parse-arguments
+define function parse-command-line
     (parser :: <command-line-parser>, argv :: <sequence>)
  => (success? :: <boolean>)
   block (exit-block)
@@ -459,7 +459,7 @@ define function parse-arguments
   exception (<option-parser-error>)
     #f
   end block
-end function parse-arguments;
+end function parse-command-line;
 
 define open generic print-synopsis
  (parser :: <command-line-parser>, stream :: <stream>, #key);

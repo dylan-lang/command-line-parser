@@ -88,7 +88,7 @@ define module command-line-parser
     positional-options,
     add-option,
     add-option-by-type,
-    parse-arguments,
+    parse-command-line,
     option-present?-by-long-name,
     get-option-value,
     print-synopsis,

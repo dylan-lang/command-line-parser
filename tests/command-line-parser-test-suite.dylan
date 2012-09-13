@@ -80,17 +80,17 @@ define function parse (#rest argv)
                      <keyed-option>,
                      long-options: #("define"),
                      short-options: #("D"));
-  values(parser, parse-arguments(parser, argv))
+  values(parser, parse-command-line(parser, argv))
 end function parse;
 
 define test command-line-parser-test ()
   let (parser, parse-result) = parse("--frobozz");
-  check-equal("parse-arguments returns #f for an unparsable command line",
+  check-equal("parse-command-line returns #f for an unparsable command line",
               parse-result,
               #f);
 
   let (parser, parse-result) = parse("--quiet");
-  check-equal("parse-arguments returns #t for a parsable command line",
+  check-equal("parse-command-line returns #t for a parsable command line",
               parse-result,
               #t);
 
@@ -145,7 +145,7 @@ end command-line;
 
 define test defcmdline-test ()
   let parser = make(<defcmdline-test-parser>);
-  parse-arguments(parser, #());
+  parse-command-line(parser, #());
   check-false("Verbose flag is false if not supplied.",
               parser.verbose?);
   check-true("Positional options are empty.",
