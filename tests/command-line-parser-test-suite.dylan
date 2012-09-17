@@ -71,11 +71,13 @@ define function make-parser ()
                      <parameter-option>,
                      long-options: #("quux"),
                      short-options: #("Q"),
+                     default: "arf",
                      help: "Quuxly quacksly");
   add-option-by-type(parser,
                      <optional-parameter-option>,
                      long-options: #("optimize"),
-                     short-options: #("O"));
+                     short-options: #("O"),
+                     variable: "LEVEL");
   add-option-by-type(parser,
                      <repeated-parameter-option>,
                      long-options: #("warning"),
@@ -137,12 +139,12 @@ define test test-synopsis ()
   let synopsis = with-output-to-string (stream)
                    print-synopsis(parser, stream)
                  end;
-  let expected = "-v, -q, --verbose, --quiet            Be more or less verbose.\n"
-                 "-f, -B, --foo, --no-foo               Be more foonly.\n"
-                 "-Q, --quux                  QUUX      Quuxly quacksly\n"
-                 "-O, --optimize              OPTIMIZE  \n"
-                 "-W, --warning               WARNING   \n"
-                 "-D, --define                DEFINE    \n";
+  let expected = "-v, -q, --verbose, --quiet           Be more or less verbose.\n"
+                 "-f, -B, --foo, --no-foo              Be more foonly.\n"
+                 "-Q, --quux                  QUUX     Quuxly quacksly\n"
+                 "-O, --optimize              LEVEL    \n"
+                 "-W, --warning               WARNING  \n"
+                 "-D, --define                DEFINE   \n";
   check-equal("synopsis same?", expected, synopsis);
 end;
 
