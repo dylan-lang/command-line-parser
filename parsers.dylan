@@ -35,24 +35,28 @@ copyright: see below
 
 
 //======================================================================
-//  <negative-option>
+//  <flag-option>
 //======================================================================
-//  Certain options may occur in positive and negative forms. This
-//  absract class takes care of the details.
+//  Flag options represent Boolean values. They may default to #t or
+//  #f, and exist in both positive and negative forms ("--foo" and
+//  "--no-foo"). In the case of conflicting options, the rightmost
+//  takes precedence to allow for abuse of the shell's "alias" command.
+//
+//  Examples:
+//    -q, -v, --quiet, --verbose
 
-define abstract open primary class <negative-option> (<option>)
-  constant slot negative-long-options :: <list> /* of: <string> */,
-    init-keyword: negative-long-options:,
-    init-value: #();
-  constant slot negative-short-options :: <list> /* of: <string> */,
-    init-keyword: negative-short-options:,
-    init-value: #();
-end class <negative-option>;
+define abstract open primary class <flag-option> (<option>)
+  constant slot negative-long-options :: <list> = #(),
+    init-keyword: negative-long-options:;
+  constant slot negative-short-options :: <list> = #(),
+    init-keyword: negative-short-options:;
+end;
 
 define method initialize
-    (option :: <negative-option>, #key, #all-keys)
+    (option :: <flag-option>, #key)
  => ()
   next-method();
+  option.option-might-have-parameters? := #f;
   // We keep our own local lists of option names, because we support two
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
@@ -64,7 +68,7 @@ define method initialize
 end method;
 
 define method negative-option?
-    (option :: <negative-option>, token :: <option-token>)
+    (option :: <flag-option>, token :: <option-token>)
  => (negative? :: <boolean>)
   let negatives =
     select (token by instance?)
@@ -73,38 +77,6 @@ define method negative-option?
     end select;
   member?(token.token-value, negatives, test: \=)
 end method negative-option?;
-
-
-//======================================================================
-//  <flag-option>
-//======================================================================
-//  Simple options represent Boolean values. They may default to #t or
-//  #f, and exist in both positive and negative forms ("--foo" and
-//  "--no-foo"). In the case of conflicting options, the rightmost
-//  takes precedence to allow for abuse of the shell's "alias" command.
-//
-//  Examples:
-//    -q, -v, --quiet, --verbose
-
-define class <flag-option> (<negative-option>)
-  // Information used to reset our parse state.
-  slot option-default-value :: <boolean>,
-    init-keyword: default:,
-    init-value: #f;
-end class <flag-option>;
-
-define method initialize
-    (option :: <flag-option>, #key, #all-keys)
- => ()
-  next-method();
-  option.option-might-have-parameters? := #f;
-end method initialize;
-
-define method reset-option
-    (option :: <flag-option>) => ()
-  next-method();
-  option.option-value := option.option-default-value;
-end;
 
 define method parse-option
     (option :: <flag-option>, parser :: <command-line-parser>)
