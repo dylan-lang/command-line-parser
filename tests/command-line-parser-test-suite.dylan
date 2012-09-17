@@ -58,7 +58,7 @@ define function make-parser ()
                      negative-long-options: #("quiet"),
                      negative-short-options: #("q"),
                      default: #t,
-                     description: "Be more or less verbose.");
+                     help: "Be more or less verbose.");
   add-option-by-type(parser,
                      <flag-option>,
                      long-options: #("foo"),
@@ -66,12 +66,12 @@ define function make-parser ()
                      negative-long-options: #("no-foo"),
                      negative-short-options: #("B"),
                      default: #f,
-                     description: "Be more foonly.");
+                     help: "Be more foonly.");
   add-option-by-type(parser,
                      <parameter-option>,
                      long-options: #("quux"),
                      short-options: #("Q"),
-                     description: "Quuxly quacksly");
+                     help: "Quuxly quacksly");
   add-option-by-type(parser,
                      <optional-parameter-option>,
                      long-options: #("optimize"),
@@ -150,7 +150,7 @@ end;
 define command-line <defcmdline-test-parser> ()
   synopsis print-defcmdline-test-synopsis,
     usage: "test [options] file...",
-    description: "Stupid test program doing nothing with the args.";
+    help: "Stupid test program doing nothing with the args.";
   option verbose?,
     "", "Explanation",
     short: "v",

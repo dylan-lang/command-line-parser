@@ -57,7 +57,7 @@ define module option-parser-protocol
       option-value,
       short-option-names, short-option-names-setter,
       long-option-names, long-option-names-setter,
-      option-description, option-description-setter,
+      option-help, option-help-setter,
       option-default-value, option-default-value-setter,
       option-might-have-parameters?, option-might-have-parameters?-setter,
       option-value-setter,
