@@ -41,13 +41,14 @@ synopsis: Test suite for the command-line-parser  library.
 define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
   test command-line-parser-test;
+  test test-synopsis;
   test defcmdline-test;
 end suite;
 
 
 // Create a parser for our standard test argument list, parse the given
 // argument list, return the parser.
-define function parse (#rest argv)
+define function make-parser ()
   let parser = make(<command-line-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option-by-type(parser,
@@ -56,18 +57,21 @@ define function parse (#rest argv)
                      short-options: #("v"),
                      negative-long-options: #("quiet"),
                      negative-short-options: #("q"),
-                     default: #t);
+                     default: #t,
+                     description: "Be more or less verbose.");
   add-option-by-type(parser,
                      <flag-option>,
                      long-options: #("foo"),
                      short-options: #("f"),
                      negative-long-options: #("no-foo"),
                      negative-short-options: #("B"),
-                     default: #f);
+                     default: #f,
+                     description: "Be more foonly.");
   add-option-by-type(parser,
                      <parameter-option>,
                      long-options: #("quux"),
-                     short-options: #("Q"));
+                     short-options: #("Q"),
+                     description: "Quuxly quacksly");
   add-option-by-type(parser,
                      <optional-parameter-option>,
                      long-options: #("optimize"),
@@ -80,8 +84,13 @@ define function parse (#rest argv)
                      <keyed-option>,
                      long-options: #("define"),
                      short-options: #("D"));
+  parser
+end function make-parser;
+
+define function parse (#rest argv)
+  let parser = make-parser();
   values(parser, parse-command-line(parser, argv))
-end function parse;
+end;
 
 define test command-line-parser-test ()
   let (parser, parse-result) = parse("--frobozz");
@@ -119,8 +128,23 @@ define test command-line-parser-test ()
   check-equal("key is defined as 'value'", defines["key"], "value");
   check-true("positional options are empty",
              empty?(parser.positional-options));
-
 end test command-line-parser-test;
+
+// This test is pretty brittle.  Would be good to make it ignore
+// whitespace to some extent.
+define test test-synopsis ()
+  let parser = make-parser();
+  let synopsis = with-output-to-string (stream)
+                   print-synopsis(parser, stream)
+                 end;
+  let expected = "-v, -q, --verbose, --quiet            Be more or less verbose.\n"
+                 "-f, -B, --foo, --no-foo               Be more foonly.\n"
+                 "-Q, --quux                  QUUX      Quuxly quacksly\n"
+                 "-O, --optimize              OPTIMIZE  \n"
+                 "-W, --warning               WARNING   \n"
+                 "-D, --define                DEFINE    \n";
+  check-equal("synopsis same?", expected, synopsis);
+end;
 
 
 define command-line <defcmdline-test-parser> ()

@@ -35,6 +35,7 @@ copyright: Copyright 1998 Eric Kidd
 define library command-line-parser
   use common-dylan;
   use io;
+  use strings;
 
   export
     command-line-parser,
@@ -82,6 +83,7 @@ end module;
 define module command-line-parser
   use common-dylan, exclude: { format-to-string };
   use option-parser-protocol;
+  use strings;
 
   export
     <command-line-parser>,

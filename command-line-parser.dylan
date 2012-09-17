@@ -105,6 +105,12 @@ copyright: see below
 // TODO(cgay): Get rid of <optional-parameter-option> and make it an
 // init-arg on <parameter-option> instead.
 
+// TODO(cgay): With an option that has negative options (e.g.,
+// --verbose and --quiet in the same option) just show the positive
+// option in the synopsis but add a comment to the doc about the
+// negative option.  e.g. "--verbose Be verbose (negative option:
+// --quiet)"
+
 
 //======================================================================
 //  Errors
@@ -113,6 +119,8 @@ copyright: see below
 define class <option-parser-error> (<format-string-condition>, <error>)
 end;
 
+// For when the user provides an invalid command-line.
+// These errors will be displayed to the user via condition-to-string.
 define class <usage-error> (<option-parser-error>)
 end;
 
@@ -120,6 +128,14 @@ end;
 define inline function usage-error
     (format-string :: <string>, #rest format-args) => ()
   error(make(<usage-error>,
+             format-string: format-string,
+             format-arguments: format-args))
+end;
+
+// Making this inline stifles return type warnings.
+define inline function parser-error
+    (format-string :: <string>, #rest format-args) => ()
+  error(make(<option-parser-error>,
              format-string: format-string,
              format-arguments: format-args))
 end;
@@ -247,6 +263,16 @@ define abstract open primary class <option> (<object>)
   slot option-value :: <object>,
     init-value: #f;
 end class <option>;
+
+define method initialize
+    (option :: <option>, #key)
+ => ()
+  next-method();
+  if (empty?(option.long-option-names)
+        & empty?(option.short-option-names))
+    parser-error("Either long-options: or short-options: must be supplied.");
+  end;
+end method initialize;
 
 define open generic reset-option(option :: <option>) => ();
 
@@ -465,50 +491,66 @@ define open generic print-synopsis
  (parser :: <command-line-parser>, stream :: <stream>, #key);
 
 // todo -- Generate the initial "Usage: ..." line as well.
+// TODO(cgay): Show all option names, not just the first.
+//
+// Example output:
+// Usage: foo [options] arg1 ...
+//   -c, --coolness  LEVEL      Level of coolness, 1-3.
+//   -r              RECURSIVE  Be cool recursively.
+//       --alacrity  ALACRITY   Level of alacrity.
+// Short options come first on a line because they're always the
+// same length (except when there are many).  Long options start
+// indented past one short option if there is no corresponding
+// short option.  If there is no variable: provided for the option
+// it defaults to the first long option name.
 define method print-synopsis
-    (parser :: <command-line-parser>,
-     stream :: <stream>,
+    (parser :: <command-line-parser>, stream :: <stream>,
      #key usage :: false-or(<string>),
           description :: false-or(<string>))
-  if (usage) format(stream, "Usage: %s\n", usage); end;
-  if (description) format(stream, "%s\n", description); end;
-  if (usage | description) new-line(stream); end;
-  local method print-option (short, long, description);
-          let short = select (short by instance?)
-                        <list> => ~empty?(short) & first(short);
-                        <string> => short;
-                        otherwise => #f;
-                      end select;
-          let long = select (long by instance?)
-                       <pair> => ~empty?(long) & first(long);
-                       <string> => long;
-                       otherwise => #f;
-                     end select;
-          write(stream, "  ");
-          if (short)
-            format(stream, "-%s", short);
-            write(stream, if (long) ", " else "  " end);
-          else
-            write(stream, "    ");
-          end if;
-          if (long)
-            format(stream, "--%s", long);
-            for (i from 1 to 28 - 2 - size(long))
-              write-element(stream, ' ');
-            end for;
-          else
-            format(stream, "%28s", "");
-          end if;
-          write(stream, description);
-          new-line(stream);
-        end method print-option;
+  usage & format(stream, "Usage: %s\n", usage);
+  description & format(stream, "%s\n", description);
 
-  for (option in option-parsers(parser))
-    print-option(short-option-names(option),
-                 long-option-names(option),
-                 option-description(option));
+  // These contain an entry for every line, sometimes just "".
+  let (names, variables, docs) = synopsis-columns(parser);
+  let name-width = reduce1(max, map(size, names));
+  let var-width = reduce1(max, map(size, variables));
+  for (name in names, var in variables, doc in docs)
+    format(stream, "%s  %s  %s\n",
+           pad-right(name, name-width), pad-right(var, var-width), doc);
   end;
 end method print-synopsis;
+
+define function synopsis-columns
+    (parser :: <command-line-parser>)
+ => (names :: <sequence>, vars :: <sequence>, docs :: <sequence>)
+  let names = make(<stretchy-vector>);
+  let vars = make(<stretchy-vector>);
+  let docs = make(<stretchy-vector>);
+  let any-shorts? = any?(method (opt) ~empty?(opt.short-option-names) end,
+                         parser.option-parsers);
+  for (option in parser.option-parsers)
+    // TODO(cgay): Make these prefixes (-- and -) configurable.
+    let longs = map(curry(concatenate, "--"), option.long-option-names);
+    let shorts = map(curry(concatenate, "-"), option.short-option-names);
+    if (empty?(shorts) & any-shorts?)
+      shorts := #("  ");  // Make long options align (usually).
+    end;
+    add!(names, join(concatenate(shorts, longs), ", "));
+    add!(vars,
+         if (instance?(option, <flag-option>))
+           ""
+         elseif (empty?(longs))
+           "ARG"
+         else
+           /* TODO(cgay): option.option-variable | */
+           uppercase(option.long-option-names[0])
+         end);
+    // TODO(cgay): Wrap doc text.
+    add!(docs, option.option-description);
+  end for;
+  values(names, vars, docs)
+end function synopsis-columns;
+
 
 /*
   Semi-comprehensible design notes, here for historical interest:
