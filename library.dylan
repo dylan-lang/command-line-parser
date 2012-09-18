@@ -54,17 +54,14 @@ define module option-parser-protocol
     // <option>
     <option>,
       option-present?,
-      option-value,
-      short-option-names, short-option-names-setter,
-      long-option-names, long-option-names-setter,
+      option-names, long-names, short-names,
       option-help, option-help-setter,
       option-default, option-default-setter,
       option-might-have-parameters?, option-might-have-parameters?-setter,
-      option-value-setter,
+      option-value, option-value-setter,
       option-variable, option-variable-setter,
     reset-option,
     parse-option,
-
     negative-option?,
 
     <token>,

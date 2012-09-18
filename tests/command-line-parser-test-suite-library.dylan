@@ -13,6 +13,7 @@ define module command-line-parser-test-suite
   use command-line-parser;
   use common-dylan, exclude: { format-to-string };
   use format;
+  use option-parser-protocol;
   use streams;
   use testworks;
 

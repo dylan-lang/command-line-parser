@@ -45,11 +45,10 @@ copyright: see below
 //  Examples:
 //    -q, -v, --quiet, --verbose
 
-define abstract open primary class <flag-option> (<option>)
-  constant slot negative-long-options :: <list> = #(),
-    init-keyword: negative-long-options:;
-  constant slot negative-short-options :: <list> = #(),
-    init-keyword: negative-short-options:;
+define open primary class <flag-option> (<option>)
+  // TODO(cgay): This should be <sequence> not <list>.
+  constant slot negative-names :: <list> = #(),
+    init-keyword: negative-names:;
 end;
 
 define method initialize
@@ -57,26 +56,18 @@ define method initialize
  => ()
   next-method();
   option.option-might-have-parameters? := #f;
-  // We keep our own local lists of option names, because we support two
+  // We keep our own local list of option names because we support two
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
   // list.
-  option.long-option-names := concatenate(option.long-option-names,
-                                          option.negative-long-options);
-  option.short-option-names := concatenate(option.short-option-names,
-                                           option.negative-short-options);
+  option.option-names := concatenate(option.option-names, option.negative-names);
 end method;
 
 define method negative-option?
     (option :: <flag-option>, token :: <option-token>)
  => (negative? :: <boolean>)
-  let negatives =
-    select (token by instance?)
-      <short-option-token> => option.negative-short-options;
-      <long-option-token> => option.negative-long-options;
-    end select;
-  member?(token.token-value, negatives, test: \=)
-end method negative-option?;
+  member?(token.token-value, option.negative-names, test: \=)
+end;
 
 define method parse-option
     (option :: <flag-option>, parser :: <command-line-parser>)

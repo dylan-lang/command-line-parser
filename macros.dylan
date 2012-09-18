@@ -290,14 +290,14 @@ define macro defcmdline-class
                  let long = ?long;
                  let short = ?short;
                  make(?kind,
-                      long-options: select (long by instance?)
-                                      <list> => long;
-                                      otherwise => list(long);
-                                    end select,
-                      short-options: select (short by instance?)
-                                       <list> => short;
-                                       otherwise => list(short);
-                                     end select,
+                      long-names: select (long by instance?)
+                                    <list> => long;
+                                    otherwise => list(long);
+                                  end select,
+                      short-names: select (short by instance?)
+                                     <list> => short;
+                                     otherwise => list(short);
+                                   end select,
                       ?initargs);
                end; ... }
     { [?class:name, ?positional-options:name] ... }

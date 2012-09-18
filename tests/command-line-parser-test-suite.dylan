@@ -43,6 +43,7 @@ define suite command-line-parser-test-suite
   test command-line-parser-test;
   test test-synopsis;
   test defcmdline-test;
+  test test-duplicate-name-error;
 end suite;
 
 
@@ -53,39 +54,30 @@ define function make-parser ()
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option-by-type(parser,
                      <flag-option>,
-                     long-options: #("verbose"),
-                     short-options: #("v"),
-                     negative-long-options: #("quiet"),
-                     negative-short-options: #("q"),
+                     names: #("verbose", "v"),
+                     negative-names: #("quiet", "q"),
                      default: #t,
                      help: "Be more or less verbose.");
   add-option-by-type(parser,
                      <flag-option>,
-                     long-options: #("foo"),
-                     short-options: #("f"),
-                     negative-long-options: #("no-foo"),
-                     negative-short-options: #("B"),
+                     names: #("foo", "f"),
+                     negative-names: #("no-foo", "B"),
                      default: #f,
                      help: "Be more foonly.");
   add-option-by-type(parser,
                      <parameter-option>,
-                     long-options: #("quux"),
-                     short-options: #("Q"),
-                     default: "arf",
+                     names: #("quux", "Q"),
                      help: "Quuxly quacksly");
   add-option-by-type(parser,
                      <optional-parameter-option>,
-                     long-options: #("optimize"),
-                     short-options: #("O"),
+                     names: #("optimize", "O"),
                      variable: "LEVEL");
   add-option-by-type(parser,
                      <repeated-parameter-option>,
-                     long-options: #("warning"),
-                     short-options: #("W"));
+                     names: #("warning", "W"));
   add-option-by-type(parser,
                      <keyed-option>,
-                     long-options: #("define"),
-                     short-options: #("D"));
+                     names: #("define", "D"));
   parser
 end function make-parser;
 
@@ -148,6 +140,12 @@ define test test-synopsis ()
   check-equal("synopsis same?", expected, synopsis);
 end;
 
+define test test-duplicate-name-error ()
+  let parser = make(<command-line-parser>);
+  add-option-by-type(parser, <flag-option>, names: #("x"));
+  check-condition("", <option-parser-error>,
+                  add-option-by-type(parser, <flag-option>, names: #("x")));
+end;
 
 define command-line <defcmdline-test-parser> ()
   synopsis print-defcmdline-test-synopsis,
