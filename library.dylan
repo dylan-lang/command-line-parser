@@ -92,6 +92,10 @@ define module command-line-parser
     get-option-value,
     print-synopsis,
 
+    // This is exported from the main module because it is expected to
+    // be used relatively frequently for user types.
+    parse-option-parameter,
+
     <flag-option>,
     <parameter-option>,
     <repeated-parameter-option>,

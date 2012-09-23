@@ -49,6 +49,7 @@ define open primary class <flag-option> (<option>)
   // TODO(cgay): This should be <sequence> not <list>.
   constant slot negative-names :: <list> = #(),
     init-keyword: negative-names:;
+  keyword type:, init-value: <boolean>;
 end;
 
 define method initialize
@@ -88,6 +89,7 @@ end;
 //    -cred, -c=red, -c = red, --color red, --color=red
 
 define class <parameter-option> (<option>)
+  keyword type:, init-value: <string>;
 end class <parameter-option>;
 
 define method parse-option
@@ -97,7 +99,9 @@ define method parse-option
   if (instance?(peek-argument-token(parser), <equals-token>))
     get-argument-token(parser);
   end if;
-  option.option-value := get-argument-token(parser).token-value;
+  option.option-value
+    := parse-option-parameter(get-argument-token(parser).token-value,
+                              option.option-type);
 end method parse-option;
 
 
@@ -128,7 +132,9 @@ define method parse-option
   if (instance?(peek-argument-token(parser), <equals-token>))
     get-argument-token(parser);
   end if;
-  push-last(option.option-value, get-argument-token(parser).token-value);
+  push-last(option.option-value,
+            parse-option-parameter(get-argument-token(parser).token-value,
+                                   option.option-type));
 end method parse-option;
 
 
@@ -160,10 +166,12 @@ define method parse-option
     case
       instance?(next, <equals-token>) =>
         get-argument-token(parser);
-        get-argument-token(parser).token-value;
+        parse-option-parameter(get-argument-token(parser).token-value,
+                               option.option-type);
       (instance?(token, <short-option-token>)
          & token.tightly-bound-to-next-token?) =>
-        get-argument-token(parser).token-value;
+        parse-option-parameter(get-argument-token(parser).token-value,
+                               option.option-type);
       otherwise =>
         #t;
     end case;
@@ -203,9 +211,10 @@ define method parse-option
   let value =
     if (instance?(peek-argument-token(parser), <equals-token>))
       get-argument-token(parser);
-      get-argument-token(parser).token-value;
+      parse-option-parameter(get-argument-token(parser).token-value,
+                             option.option-type)
     else
-      #t;
-    end if;
+      #t
+    end;
   option.option-value[key] := value;
 end method parse-option;

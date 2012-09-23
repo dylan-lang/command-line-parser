@@ -75,10 +75,6 @@ copyright: see below
 // TODO(cgay): <choice-option>: --foo=a|b|c (#f as choice means option
 // value is optional?)
 
-// TODO(cgay): Add type: option to all parsers that determines how to
-// parse the inputs.  Validate that the provided default: argument is
-// an instance of the type and give a good error.  Make extensible.
-
 // TODO(cgay): Automatic support for --help, with a way to rename or
 // disable the option.  Includes improvements to print-synopsis such
 // as supporting %prog, %default, %choices, etc. and displaying the
@@ -96,9 +92,6 @@ copyright: see below
 
 // TODO(cgay): Export usage-error and <usage-error> after fixing them
 // up.  These are duplicated in testworks, so use them there.
-
-// TODO(cgay): Get rid of <optional-parameter-option> and make it an
-// init-arg on <parameter-option> instead.
 
 // TODO(cgay): With an option that has negative options (e.g.,
 // --verbose and --quiet in the same option) just show the positive
@@ -247,6 +240,8 @@ define abstract open primary class <option> (<object>)
   // TODO(cgay): This should be <sequence> instead of <list>.
   slot option-names :: <list> = #(),
     required-init-keyword: names:;
+  constant slot option-type :: <type> = <object>,
+    init-keyword: type:;
   slot option-might-have-parameters? :: <boolean> = #t;
   slot option-help :: <string> = "",
     init-keyword: help:;
@@ -264,15 +259,95 @@ define abstract open primary class <option> (<object>)
   slot option-value :: <object> = #f;
 end class <option>;
 
-define open generic reset-option(option :: <option>) => ();
+define method initialize
+    (option :: <option>, #key) => ()
+  next-method();
+  let default = option.option-default;
+  let type = option.option-type;
+  if (default & ~instance?(default, type))
+    parser-error("The default value (%=) for option %s is not of the correct "
+                   "type (%s).", default, option.option-names, type);
+  end;
+end method initialize;
 
-define method reset-option(option :: <option>) => ()
+// Reset the option-value back to the option-default.
+define open generic reset-option
+    (option :: <option>) => ();
+
+// Parse a parameter value passed on the command line (a string)
+// to the type specified by option-type.
+define open generic parse-option-parameter
+    (parameter :: <string>, type :: <type>) => (value :: <object>);
+
+// Read tokens from the command line and decide how to store them.
+define open generic parse-option
+    (option :: <option>, args :: <command-line-parser>) => ();
+
+
+define method reset-option
+    (option :: <option>) => ()
   option.option-present? := #f;
   option.option-value := option.option-default;
 end method reset-option;
 
-define open generic parse-option
-    (option :: <option>, args :: <command-line-parser>) => ();
+
+// ----------------------
+// parse-option-parameter
+// ----------------------
+
+// Default method just returns parameter.
+define method parse-option-parameter
+    (param :: <string>, type :: <type>) => (value :: <string>)
+  param
+end;
+
+// This is essentially for "float or int", which could be <real>, but
+// <number> is also a natural choice.
+define method parse-option-parameter
+    (param :: <string>, type :: subclass(<number>)) => (value :: <number>)
+  let arg = lowercase(param);
+  /*  no string-to-float yet
+  if (member?('.', arg) | member?('e', arg))
+    string-to-float(param)
+  */
+  if (starts-with?(param, "0x") & hexadecimal-digit?(param, start: 2))
+    string-to-integer(copy-sequence(param, start: 2), base: 16)
+  elseif (starts-with?(param, "0") & octal-digit?(param))
+    string-to-integer(param, base: 8)
+  elseif (decimal-digit?(param))
+    string-to-integer(param)
+  else
+    usage-error("Expected a number but got %=", param);
+  end
+end;
+
+define method parse-option-parameter
+    (param :: <string>, type == <boolean>) => (value :: <boolean>)
+  if (member?(param, #("yes", "true", "on"), test: string-equal-ic?))
+    #t
+  elseif (member?(param, #("no", "false", "off"), test: string-equal-ic?))
+    #t
+  else
+    usage-error("Expected yes/no, true/false, or on/off but got %=", param);
+  end
+end;
+
+define method parse-option-parameter
+    (param :: <string>, type == <symbol>) => (value :: <symbol>)
+  as(<symbol>, param)
+end;
+
+define method parse-option-parameter
+    (param :: <string>, type :: subclass(<sequence>)) => (value :: <sequence>)
+  as(type, map(strip, split(param, ",")))
+end;
+
+// override subclass(<sequence>) method
+define method parse-option-parameter
+    (param :: <string>, type == <string>) => (value :: <string>)
+  param
+end;
+
 
 define function add-option-by-type
     (parser :: <command-line-parser>, class :: <class>, #rest keys)
@@ -464,17 +539,17 @@ define function parse-command-line
           parser.positional-options := add!(parser.positional-options,
                                             token.token-value);
         <short-option-token> =>
-          let opt-parser =
+          let option =
             element(parser.option-short-name-map, token.token-value, default: #f)
               | exit-block(#f);
-          parse-option(opt-parser, parser);
-          opt-parser.option-present? := #t;
+          parse-option(option, parser);
+          option.option-present? := #t;
         <long-option-token> =>
-          let opt-parser =
+          let option =
             element(parser.option-long-name-map, token.token-value, default: #f)
               | exit-block(#f);
-          parse-option(opt-parser, parser);
-          opt-parser.option-present? := #t;
+          parse-option(option, parser);
+          option.option-present? := #t;
         otherwise =>
           parser-error("Unrecognized token: %=", token);
       end select;

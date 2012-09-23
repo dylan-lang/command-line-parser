@@ -38,12 +38,16 @@ synopsis: Test suite for the command-line-parser  library.
 // Now in libraries/utilities/command-line-parser/tests
 // Hannes Mehnert 2007.02.23
 
+// Now in it's own github repo.  cgay ~2011
+
 define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
-  test command-line-parser-test;
+  test test-command-line-parser;
   test test-synopsis;
-  test defcmdline-test;
   test test-duplicate-name-error;
+  test test-option-type;
+  test test-option-default;
+  test test-defcmdline;
 end suite;
 
 
@@ -86,7 +90,7 @@ define function parse (#rest argv)
   values(parser, parse-command-line(parser, argv))
 end;
 
-define test command-line-parser-test ()
+define test test-command-line-parser ()
   let (parser, parse-result) = parse("--frobozz");
   check-equal("parse-command-line returns #f for an unparsable command line",
               parse-result,
@@ -122,7 +126,7 @@ define test command-line-parser-test ()
   check-equal("key is defined as 'value'", defines["key"], "value");
   check-true("positional options are empty",
              empty?(parser.positional-options));
-end test command-line-parser-test;
+end test test-command-line-parser;
 
 // This test is pretty brittle.  Would be good to make it ignore
 // whitespace to some extent.
@@ -147,6 +151,67 @@ define test test-duplicate-name-error ()
                   add-option-by-type(parser, <flag-option>, names: #("x")));
 end;
 
+define test test-option-type ()
+  local method make-parser ()
+          let parser = make(<command-line-parser>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("integer"),
+                             type: <integer>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("sequence"),
+                             type: <sequence>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("list"),
+                             type: <list>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("vector"),
+                             type: <vector>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("symbol"),
+                             type: <symbol>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("number"),
+                             type: <number>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("real"),
+                             type: <real>);
+          add-option-by-type(parser, <parameter-option>,
+                             names: #("string"),
+                             type: <string>); // uses default case, no conversion
+          parser
+        end method make-parser;
+  let items = list(list("integer", "123", 123, <integer>),
+                   list("integer", "0123", #o123, <integer>),
+                   list("integer", "0x123", #x123, <integer>),
+                   list("sequence", "1,2,3", #["1", "2", "3"], <sequence>),
+                   list("list", "1,2,3", #("1", "2", "3"), <list>),
+                   list("vector", "1,2,3", #["1", "2", "3"], <vector>),
+                   list("symbol", "foo", #"foo", <symbol>),
+                   list("number", "123", 123, <integer>),
+                   list("real", "123", 123, <integer>),
+                   list("string", "bar", "bar", <string>));
+  for (item in items)
+    let (name, param, expected-value, expected-type) = apply(values, item);
+    let parser = make-parser();
+    parse-command-line(parser, list(concatenate("--", name), param));
+    check-equal(name, expected-value, get-option-value(parser, name));
+  end;
+end test test-option-type;
+
+define test test-option-default ()
+  let parser = make(<command-line-parser>);
+  check-condition("bad default", <option-parser-error>,
+                  add-option-by-type(parser, <parameter-option>,
+                                     names: #("foo"),
+                                     type: <integer>,
+                                     default: "string"));
+  check-no-condition("good default",
+                     add-option-by-type(parser, <parameter-option>,
+                                        names: #("foo"),
+                                        type: <integer>,
+                                        default: 1234));
+end test test-option-default;
+
 define command-line <defcmdline-test-parser> ()
   synopsis print-defcmdline-test-synopsis,
     usage: "test [options] file...",
@@ -167,14 +232,14 @@ define command-line <defcmdline-test-parser> ()
 end command-line;
 
 
-define test defcmdline-test ()
+define test test-defcmdline ()
   let parser = make(<defcmdline-test-parser>);
   parse-command-line(parser, #());
   check-false("Verbose flag is false if not supplied.",
               parser.verbose?);
   check-true("Positional options are empty.",
              empty?(parser.file-names));
-end test defcmdline-test;
+end test test-defcmdline;
 
 // Prevent warnings for unused defs.
 begin
