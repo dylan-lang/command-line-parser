@@ -574,9 +574,9 @@ define open generic print-synopsis
 //
 // Example output:
 // Usage: foo [options] arg1 ...
-//   -c, --coolness  LEVEL      Level of coolness, 1-3.
-//   -r              RECURSIVE  Be cool recursively.
-//       --alacrity  ALACRITY   Level of alacrity.
+//   -c, --coolness LEVEL      Level of coolness, 1-3.
+//   -r RECURSIVE              Be cool recursively.
+//       --alacrity ALACRITY   Level of alacrity.
 // Short options come first on a line because they're always the
 // same length (except when there are many).  Long options start
 // indented past one short option if there is no corresponding
@@ -590,20 +590,17 @@ define method print-synopsis
   help & format(stream, "%s\n", help);
 
   // These contain an entry for every line, sometimes just "".
-  let (names, variables, docs) = synopsis-columns(parser);
+  let (names, docs) = synopsis-columns(parser);
   let name-width = reduce1(max, map(size, names));
-  let var-width = reduce1(max, map(size, variables));
-  for (name in names, var in variables, doc in docs)
-    format(stream, "%s  %s  %s\n",
-           pad-right(name, name-width), pad-right(var, var-width), doc);
+  for (name in names, doc in docs)
+    format(stream, "%s  %s\n", pad-right(name, name-width), doc);
   end;
 end method print-synopsis;
 
 define function synopsis-columns
     (parser :: <command-line-parser>)
- => (names :: <sequence>, vars :: <sequence>, docs :: <sequence>)
+ => (names :: <sequence>, docs :: <sequence>)
   let names = make(<stretchy-vector>);
-  let vars = make(<stretchy-vector>);
   let docs = make(<stretchy-vector>);
   let any-shorts? = any?(method (opt) ~empty?(opt.short-names) end,
                          parser.option-parsers);
@@ -611,22 +608,26 @@ define function synopsis-columns
     // TODO(cgay): Make these prefixes (-- and -) configurable.
     let longs = map(curry(concatenate, "--"), option.long-names);
     let shorts = map(curry(concatenate, "-"), option.short-names);
-    if (empty?(shorts) & any-shorts?)
-      shorts := #("  ");  // Makes long options align (usually).
-    end;
-    add!(names, join(concatenate(shorts, longs), ", "));
-    add!(vars,
-         if (instance?(option, <flag-option>))
-           ""
-         elseif (empty?(longs))
-           "ARG"
-         else
-           option.option-variable | uppercase(option.long-names[0])
-         end);
+    let name = concatenate(join(concatenate(shorts, longs), ", "),
+                           " ",
+                           case
+                             instance?(option, <flag-option>) => "";
+                             empty?(longs) => "X";
+                             otherwise =>
+                               option.option-variable
+                                 | uppercase(option.long-names[0])
+                           end);
+    let indent = if (empty?(shorts) & any-shorts?)
+                   // Makes long options align (usually).
+                   "      "
+                 else
+                   "  "
+                 end;
+    add!(names, concatenate(indent, name));
     // TODO(cgay): Wrap doc text.
     add!(docs, option.option-help);
   end for;
-  values(names, vars, docs)
+  values(names, docs)
 end function synopsis-columns;
 
 
