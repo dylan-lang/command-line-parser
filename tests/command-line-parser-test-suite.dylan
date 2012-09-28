@@ -67,7 +67,7 @@ define function make-parser ()
                      names: #("foo", "f"),
                      negative-names: #("no-foo", "B"),
                      default: #f,
-                     help: "Be more foonly.");
+                     help: "Be more or less foonly.");
   add-option-by-type(parser,
                      <parameter-option>,
                      names: #("quux", "Q"),
@@ -135,12 +135,12 @@ define test test-synopsis ()
   let synopsis = with-output-to-string (stream)
                    print-synopsis(parser, stream)
                  end;
-  let expected = "-v, -q, --verbose, --quiet           Be more or less verbose.\n"
-                 "-f, -B, --foo, --no-foo              Be more foonly.\n"
-                 "-Q, --quux                  QUUX     Quuxly quacksly\n"
-                 "-O, --optimize              LEVEL    \n"
-                 "-W, --warning               WARNING  \n"
-                 "-D, --define                DEFINE   \n";
+  let expected = "  -v, -q, --verbose, --quiet   Be more or less verbose.\n"
+                 "  -f, -B, --foo, --no-foo      Be more or less foonly.\n"
+                 "  -Q, --quux QUUX              Quuxly quacksly\n"
+                 "  -O, --optimize LEVEL         \n"
+                 "  -W, --warning WARNING        \n"
+                 "  -D, --define DEFINE          \n";
   check-equal("synopsis same?", expected, synopsis);
 end;
 
