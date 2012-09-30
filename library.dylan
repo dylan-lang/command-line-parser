@@ -46,6 +46,7 @@ end library;
 define module option-parser-protocol
   create
     // <command-line-parser>
+      reset-parser,
       argument-tokens-remaining?,
       get-argument-token,
       peek-argument-token,
@@ -74,13 +75,16 @@ define module option-parser-protocol
     <equals-token>,
 
     <option-parser-error>;
-end module;
+end module option-parser-protocol;
 
 // Used by most programs.
 define module command-line-parser
   use common-dylan, exclude: { format-to-string };
+  use format;
   use option-parser-protocol;
+  use standard-io;
   use strings;
+  use streams;
 
   export
     <command-line-parser>,
@@ -88,7 +92,6 @@ define module command-line-parser
     add-option,
     add-option-by-type,
     parse-command-line,
-    option-present?-by-long-name,
     get-option-value,
     print-synopsis,
 
@@ -105,9 +108,6 @@ define module command-line-parser
     usage-error,
     <usage-error>;
 
-  use streams;
-  use format;
-
   export
     command-line-definer,
     defcmdline-rec,
@@ -116,4 +116,4 @@ define module command-line-parser
     defcmdline-init,
     defcmdline-accessors,
     defcmdline-synopsis;
-end module;
+end module command-line-parser;
