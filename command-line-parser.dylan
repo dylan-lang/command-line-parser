@@ -99,6 +99,17 @@ copyright: see below
 // negative option.  e.g. "--verbose Be verbose (negative option:
 // --quiet)"
 
+// TODO(cgay): Create a default parser that can be used for libraries
+// (as opposed to executables) to add options.  The executable can decide
+// whether it wants to allow libraries' options by either using the
+// default (shared) parser or not.  This is a really convenient way to
+// make libraries easily configurable.  They would generally use a
+// prefix to make their options unique, e.g., --log-* for the logging
+// library.
+
+// TODO(cgay): (Related to above.)  Add a way to group options together
+// so that there can be a heading above each group.  For example,
+// "Logging options:".
 
 //======================================================================
 //  Errors
