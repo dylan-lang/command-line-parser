@@ -268,8 +268,7 @@ end;
 
 define abstract open primary class <option> (<object>)
   // Information supplied by creator.
-  // TODO(cgay): This should be <sequence> instead of <list>.
-  slot option-names :: <list> = #(),
+  slot option-names :: <sequence> = #(),
     required-init-keyword: names:;
   constant slot option-type :: <type> = <object>,
     init-keyword: type:;
