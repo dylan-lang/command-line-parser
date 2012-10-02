@@ -91,15 +91,7 @@ define function parse (#rest argv)
 end;
 
 define test test-command-line-parser ()
-  let (parser, parse-result) = parse("--frobozz");
-  check-equal("parse-command-line returns #f for an unparsable command line",
-              parse-result,
-              #f);
-
-  let (parser, parse-result) = parse("--quiet");
-  check-equal("parse-command-line returns #t for a parsable command line",
-              parse-result,
-              #t);
+  check-condition("blah", <usage-error>, parse("--bad-option-no-donut"));
 
   // A correct parse with all arguments specified in long format.
   let (parser, parse-result) = parse("--verbose", "--foo",
@@ -147,7 +139,7 @@ end;
 define test test-duplicate-name-error ()
   let parser = make(<command-line-parser>);
   add-option-by-type(parser, <flag-option>, names: #("x"));
-  check-condition("", <option-parser-error>,
+  check-condition("", <command-line-parser-error>,
                   add-option-by-type(parser, <flag-option>, names: #("x")));
 end;
 
@@ -200,7 +192,7 @@ end test test-option-type;
 
 define test test-option-default ()
   let parser = make(<command-line-parser>);
-  check-condition("bad default", <option-parser-error>,
+  check-condition("bad default", <command-line-parser-error>,
                   add-option-by-type(parser, <parameter-option>,
                                      names: #("foo"),
                                      type: <integer>,

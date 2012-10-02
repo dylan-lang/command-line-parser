@@ -72,9 +72,7 @@ define module option-parser-protocol
     <short-option-token>,
       tightly-bound-to-next-token?, // XXX - not implemented fully
     <long-option-token>,
-    <equals-token>,
-
-    <option-parser-error>;
+    <equals-token>;
 end module option-parser-protocol;
 
 // Used by most programs.
@@ -105,8 +103,10 @@ define module command-line-parser
     <optional-parameter-option>,
     <keyed-option>,
 
-    usage-error,
-    <usage-error>;
+    <command-line-parser-error>,
+      <usage-error>,
+        <help-requested>,
+    usage-error;
 
   export
     command-line-definer,

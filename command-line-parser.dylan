@@ -114,12 +114,18 @@ copyright: see below
 //  Errors
 //======================================================================
 
-define class <option-parser-error> (<format-string-condition>, <error>)
+define class <command-line-parser-error> (<format-string-condition>, <error>)
 end;
 
 // For when the user provides an invalid command-line.
 // These errors will be displayed to the user via condition-to-string.
-define class <usage-error> (<option-parser-error>)
+define class <usage-error> (<command-line-parser-error>)
+end;
+
+// This isn't quite right, but it gives callers a way to handle
+// the case where we would normally call exit-application.  See
+// comment in parse-command-line for details.
+define class <help-requested> (<usage-error>)
 end;
 
 // Making this inline stifles return type warnings.
@@ -133,7 +139,7 @@ end;
 // Making this inline stifles return type warnings.
 define inline function parser-error
     (format-string :: <string>, #rest format-args) => ()
-  error(make(<option-parser-error>,
+  error(make(<command-line-parser-error>,
              format-string: format-string,
              format-arguments: format-args))
 end;
@@ -562,23 +568,27 @@ define method parse-command-line
                        parser.help-option.option-names))
     add-option(parser, parser.help-option);
   end;
-  let handler <usage-error>
-    = method (condition, next-handler)
-        if (do-help?)
-          format(*standard-output*,
-                 "Error: %s\nUse %s to see command-line options.\n",
-                 condition,
-                 join(map(visible-option-name, parser.help-option.option-names), ", ",
-                      conjunction: " or "));
-          exit-application(2);
-        else
-          next-handler();  // caller chose to handle it
-        end;
-      end method;
-  %parse-command-line(parser, argv);
-  if (do-help? &  get-option-value(parser, "help"))
+  block ()
+    %parse-command-line(parser, argv);
+  exception (ex :: <usage-error>)
+    if (do-help?)
+      format(*standard-output*,
+             "Error: %s\nUse %s to see command-line options.\n",
+             ex,
+             join(map(visible-option-name, parser.help-option.option-names), ", ",
+                  conjunction: " or "));
+      // Rather than calling exit-application here we raise a subclass
+      // of <usage-error>.  If/when exit-application raises an
+      // exception rather than calling exit() we can call it here
+      // instead.  That simplifies the calling code (since it doesn't
+      // HAVE to handle errors), allows the caller to handle it if it
+      // wants, and makes THIS code testable.
+    end;
+    signal(ex)
+  end;
+  if (do-help? & get-option-value(parser, "help"))
     print-synopsis(parser, *standard-output*);
-    exit-application(2);
+    error(make(<help-requested>));
   end;
 end method parse-command-line;
 
