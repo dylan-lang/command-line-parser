@@ -630,7 +630,7 @@ define function %parse-command-line
 end function %parse-command-line;
 
 define open generic print-synopsis
- (parser :: <command-line-parser>, stream :: <stream>, #key);
+    (parser :: <command-line-parser>, stream :: <stream>, #key) => ();
 
 // todo -- Generate the initial "Usage: ..." line as well.
 // TODO(cgay): Show all option names, not just the first.
@@ -649,6 +649,7 @@ define method print-synopsis
     (parser :: <command-line-parser>, stream :: <stream>,
      #key usage :: false-or(<string>),
           help :: false-or(<string>))
+ => ()
   usage & format(stream, "Usage: %s\n", usage);
   help & format(stream, "%s\n", help);
 
