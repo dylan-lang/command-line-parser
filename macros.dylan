@@ -360,6 +360,7 @@ define macro defcmdline-accessors
     { } => { }
 end macro;
 
+// TODO(cgay): wtf?  This duplicates print-synopsis and is now completely obsolete.
 define macro defcmdline-synopsis
     { defcmdline-synopsis ?:name
        (?fn:name, ?usage:expression, ?description:expression)
@@ -422,5 +423,3 @@ define macro defcmdline-synopsis
       => { ... }
     { } => { }
 end macro;
-
-// EOF

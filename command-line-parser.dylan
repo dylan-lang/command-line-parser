@@ -164,7 +164,7 @@ define open class <command-line-parser> (<object>)
   constant slot tokens :: <deque> /* of: <token> */ =
     make(<deque> /* of: <token> */);
 
-  // TODO(cgay): Rename to position-arguments
+  // TODO(cgay): Rename to positional-arguments
   slot positional-options :: <stretchy-vector> /* of <string> */
     = make(<stretchy-vector>);
 
@@ -648,10 +648,10 @@ define open generic print-synopsis
 define method print-synopsis
     (parser :: <command-line-parser>, stream :: <stream>,
      #key usage :: false-or(<string>),
-          help :: false-or(<string>))
+          description :: false-or(<string>))
  => ()
   usage & format(stream, "Usage: %s\n", usage);
-  help & format(stream, "%s\n", help);
+  description & format(stream, "%s\n", description);
 
   // These contain an entry for every line, sometimes just "".
   let (names, docs) = synopsis-columns(parser);
