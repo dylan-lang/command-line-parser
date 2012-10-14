@@ -390,12 +390,6 @@ define method parse-option-parameter
 end;
 
 
-define function add-option-by-type
-    (parser :: <command-line-parser>, class :: <class>, #rest keys)
- => ()
-  add-option(parser, apply(make, class, keys));
-end function add-option-by-type;
-
 define method short-names
     (option :: <option>) => (names :: <list>)
   choose(method (name :: <string>)
@@ -586,7 +580,7 @@ define method parse-command-line
     end;
     signal(ex)
   end;
-  if (do-help? & get-option-value(parser, "help"))
+  if (do-help? & parser.help-option.option-value)
     print-synopsis(parser, *standard-output*);
     error(make(<help-requested>));
   end;

@@ -56,32 +56,32 @@ end suite;
 define function make-parser ()
   let parser = make(<command-line-parser>);
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
-  add-option-by-type(parser,
-                     <flag-option>,
-                     names: #("verbose", "v"),
-                     negative-names: #("quiet", "q"),
-                     default: #t,
-                     help: "Be more or less verbose.");
-  add-option-by-type(parser,
-                     <flag-option>,
-                     names: #("foo", "f"),
-                     negative-names: #("no-foo", "B"),
-                     default: #f,
-                     help: "Be more or less foonly.");
-  add-option-by-type(parser,
-                     <parameter-option>,
-                     names: #("quux", "Q"),
-                     help: "Quuxly quacksly");
-  add-option-by-type(parser,
-                     <optional-parameter-option>,
-                     names: #("optimize", "O"),
-                     variable: "LEVEL");
-  add-option-by-type(parser,
-                     <repeated-parameter-option>,
-                     names: #("warning", "W"));
-  add-option-by-type(parser,
-                     <keyed-option>,
-                     names: #("define", "D"));
+  add-option(parser,
+             make(<flag-option>,
+                  names: #("verbose", "v"),
+                  negative-names: #("quiet", "q"),
+                  default: #t,
+                  help: "Be more or less verbose."));
+  add-option(parser,
+             make(<flag-option>,
+                  names: #("foo", "f"),
+                  negative-names: #("no-foo", "B"),
+                  default: #f,
+                  help: "Be more or less foonly."));
+  add-option(parser,
+             make(<parameter-option>,
+                  names: #("quux", "Q"),
+                  help: "Quuxly quacksly"));
+  add-option(parser,
+             make(<optional-parameter-option>,
+                  names: #("optimize", "O"),
+                  variable: "LEVEL"));
+  add-option(parser,
+             make(<repeated-parameter-option>,
+                  names: #("warning", "W")));
+  add-option(parser,
+             make(<keyed-option>,
+                  names: #("define", "D")));
   parser
 end function make-parser;
 
@@ -138,38 +138,38 @@ end;
 
 define test test-duplicate-name-error ()
   let parser = make(<command-line-parser>);
-  add-option-by-type(parser, <flag-option>, names: #("x"));
+  add-option(parser, make(<flag-option>, names: #("x")));
   check-condition("", <command-line-parser-error>,
-                  add-option-by-type(parser, <flag-option>, names: #("x")));
+                  add-option(parser, make(<flag-option>, names: #("x"))));
 end;
 
 define test test-option-type ()
   local method make-parser ()
           let parser = make(<command-line-parser>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("integer"),
-                             type: <integer>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("sequence"),
-                             type: <sequence>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("list"),
-                             type: <list>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("vector"),
-                             type: <vector>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("symbol"),
-                             type: <symbol>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("number"),
-                             type: <number>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("real"),
-                             type: <real>);
-          add-option-by-type(parser, <parameter-option>,
-                             names: #("string"),
-                             type: <string>); // uses default case, no conversion
+          add-option(parser, make(<parameter-option>,
+                                  names: #("integer"),
+                                  type: <integer>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("sequence"),
+                                  type: <sequence>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("list"),
+                                  type: <list>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("vector"),
+                                  type: <vector>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("symbol"),
+                                  type: <symbol>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("number"),
+                                  type: <number>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("real"),
+                                  type: <real>));
+          add-option(parser, make(<parameter-option>,
+                                  names: #("string"),
+                                  type: <string>)); // uses default case, no conversion
           parser
         end method make-parser;
   let items = list(list("integer", "123", 123, <integer>),
@@ -193,15 +193,15 @@ end test test-option-type;
 define test test-option-default ()
   let parser = make(<command-line-parser>);
   check-condition("bad default", <command-line-parser-error>,
-                  add-option-by-type(parser, <parameter-option>,
-                                     names: #("foo"),
-                                     type: <integer>,
-                                     default: "string"));
+                  add-option(parser, make(<parameter-option>,
+                                          names: #("foo"),
+                                          type: <integer>,
+                                          default: "string")));
   check-no-condition("good default",
-                     add-option-by-type(parser, <parameter-option>,
-                                        names: #("foo"),
-                                        type: <integer>,
-                                        default: 1234));
+                     add-option(parser, make(<parameter-option>,
+                                             names: #("foo"),
+                                             type: <integer>,
+                                             default: 1234)));
 end test test-option-default;
 
 define command-line <defcmdline-test-parser> ()
