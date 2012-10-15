@@ -44,22 +44,20 @@ copyright: see below
 //  goals were to support all common types of options and allow the user of
 //  the library to add support for the less common ones.
 //
-//  To parse a list of arguments, you need to perform the following steps:
+//  To parse a list of options, you need to perform the following steps:
 //
-//    1. Create an <argument-list-parser>.
-//    2. Create individual <option-parser>s and attach them to it.
-//    3. Tell the <argument-list-parser> to parse a list of strings.
-//    4. Call option-value or option-value-long-name to retrieve your
-//       option data.
-//    5. Reuse your option parser by calling parse-arguments again, or
+//    1. Create an <command-line-parser>.
+//    2. Create individual <option>s and attach them to it.
+//    3. Tell the <command-line-parser> to parse a list of strings.
+//    4. Call get-option-value to retrieve your option data.
+//    5. Re-use your option parser by calling parse-command-line again, or
 //       just forget about it.
 //
 //  A note about terminology:
 //    foo -x --y=bar baz
 //
 //  All the tokens on that command line are arguments. "-x" and "--y"
-//  are options, and "bar" is a parameter. "baz" is a regular argument.
-
+//  are options, and "bar" is a parameter. "baz" is a positional argument.
 
 // todo -- There is no error signalled if two options have the same short name
 //         (or long name, I assume).  In fact there's a comment saying that the
@@ -70,71 +68,174 @@ copyright: see below
 //         and the syntax for specifying "syntax" and docstring is bizarre at
 //         best.  --cgay 2006.11.27
 
+// TODO(cgay): documentation!
+
+// TODO(cgay): tests!
+
+// TODO(cgay): <choice-option>: --foo=a|b|c (#f as choice means option
+// value is optional?)
+
+// TODO(cgay): Make print-synopsis support %prog, %default, %choices,
+// etc. and display the option type (e.g., "integer", "number", "string")
+
+// TODO(cgay): Add a required: (or required?: ?) init keyword that
+// makes non-positional args required else an error is generated.
+
+// TODO(cgay): Add support for specifying the min/max number of
+// positional args when instantiating the parser.
+
+// TODO(cgay): This error sucks: "<unknown-option>" is not present as
+// a key for {<string-table>: size 12}.  How about "<unknown-option>
+// is not a recognized command-line option."  See next item.
+
+// TODO(cgay): Export usage-error and <usage-error> after fixing them
+// up.  These are duplicated in testworks, so use them there.
+
+// TODO(cgay): With an option that has negative options (e.g.,
+// --verbose and --quiet in the same option) just show the positive
+// option in the synopsis but add a comment to the doc about the
+// negative option.  e.g. "--verbose Be verbose (negative option:
+// --quiet)"
+
+// TODO(cgay): Create a default parser that can be used for libraries
+// (as opposed to executables) to add options.  The executable can decide
+// whether it wants to allow libraries' options by either using the
+// default (shared) parser or not.  This is a really convenient way to
+// make libraries easily configurable.  They would generally use a
+// prefix to make their options unique, e.g., --log-* for the logging
+// library.  --help should display only the executable's options and a
+// note like "Use --helpall to list all options."
+
+// TODO(cgay): (Related to above.)  Add a way to group options together
+// so that there can be a heading above each group.  For example,
+// "Logging options:".
 
 //======================================================================
-//  <argument-list-parser>
+//  Errors
 //======================================================================
 
-define open class <argument-list-parser> (<object>)
-  // Retained across calls to parse-arguments.
-  slot option-parsers :: <stretchy-vector> /* of <option-parser> */ =
-    make(<stretchy-vector> /* of <option-parser> */);
-  constant slot option-short-name-map :: <string-table> /* of <option-parser> */ =
+define class <command-line-parser-error> (<format-string-condition>, <error>)
+end;
+
+// For when the user provides an invalid command-line.
+// These errors will be displayed to the user via condition-to-string.
+define class <usage-error> (<command-line-parser-error>)
+end;
+
+// This isn't quite right, but it gives callers a way to handle
+// the case where we would normally call exit-application.  See
+// comment in parse-command-line for details.
+define class <help-requested> (<usage-error>)
+end;
+
+// Making this inline stifles return type warnings.
+define inline function usage-error
+    (format-string :: <string>, #rest format-args) => ()
+  error(make(<usage-error>,
+             format-string: format-string,
+             format-arguments: format-args))
+end;
+
+// Making this inline stifles return type warnings.
+define inline function parser-error
+    (format-string :: <string>, #rest format-args) => ()
+  error(make(<command-line-parser-error>,
+             format-string: format-string,
+             format-arguments: format-args))
+end;
+
+
+//======================================================================
+//  <command-line-parser>
+//======================================================================
+
+define open class <command-line-parser> (<object>)
+  // Retained across calls to parse-command-line.
+  slot option-parsers :: <stretchy-vector> /* of <option> */ =
+    make(<stretchy-vector> /* of <option> */);
+  constant slot option-short-name-map :: <string-table> /* of <option> */ =
     make(<string-table>);
-  constant slot option-long-name-map :: <string-table> /* of <option-parser> */ =
+  constant slot option-long-name-map :: <string-table> /* of <option> */ =
     make(<string-table>);
+  // name => might-have-parameters?
   constant slot parameter-options :: <string-table> /* of <boolean> */ =
     make(<string-table>);
 
-  // Information generated by parsing arguments.
-  constant slot tokens :: <deque> /* of: <argument-token> */ =
-    make(<deque> /* of: <argument-token> */);
-  slot regular-arguments :: <stretchy-vector> /* of: <string> */ =
-    make(<stretchy-vector> /* of: <string> */);
-end class <argument-list-parser>;
+  constant slot tokens :: <deque> /* of: <token> */ =
+    make(<deque> /* of: <token> */);
 
-define function add-option-parser
-    (args-parser :: <argument-list-parser>, opt-parser :: <option-parser>)
+  // TODO(cgay): Rename to positional-arguments
+  slot positional-options :: <stretchy-vector> /* of <string> */
+    = make(<stretchy-vector>);
+
+  // Whether to automatically handle --help for the client.
+  constant slot provide-help-option? :: <boolean> = #t,
+    init-keyword: provide-help-option?:;
+  constant slot help-option :: <flag-option>
+    = make(<flag-option>,
+           names: #("help", "h"),
+           help: "Display this message."),
+    init-keyword: help-option:;
+end class <command-line-parser>;
+
+define open generic reset-parser
+    (parser :: <command-line-parser>) => ();
+
+define method reset-parser
+    (parser :: <command-line-parser>) => ()
+  parser.tokens.size := 0;
+  parser.positional-options.size := 0;
+  do(reset-option, parser.option-parsers);
+end;
+
+define function add-option
+    (parser :: <command-line-parser>, option :: <option>)
  => ()
-  local method add-to-table(table, items, value) => ()
-          for (item in items)
-            table[item] := value;
-          end for;
-        end method add-to-table;
-  args-parser.option-parsers := add!(args-parser.option-parsers, opt-parser);
-  add-to-table(args-parser.option-long-name-map,
-               opt-parser.long-option-names,
-               opt-parser);
-  add-to-table(args-parser.option-short-name-map,
-               opt-parser.short-option-names,
-               opt-parser);
-  if (opt-parser.option-might-have-parameters?)
-    add-to-table(args-parser.parameter-options,
-                 opt-parser.short-option-names,
+  local method add-to-table(table, names, value) => ()
+          for (name in names)
+            if (element(table, name, default: #f))
+              parser-error("Duplicate option name: %=", name);
+            end;
+            table[name] := value;
+          end;
+        end;
+  add-to-table(parser.option-long-name-map,
+               option.long-names,
+               option);
+  add-to-table(parser.option-short-name-map,
+               option.short-names,
+               option);
+  if (option.option-might-have-parameters?)
+    add-to-table(parser.parameter-options,
+                 option.short-names,
                  #t);
   end if;
-end function add-option-parser;
+  parser.option-parsers := add!(parser.option-parsers, option);
+end function add-option;
 
-define function option-parser-by-long-name
-    (parser :: <argument-list-parser>, long-name :: <string>)
- => (value :: <option-parser>)
-  parser.option-long-name-map[long-name];
+define method find-option
+    (parser :: <command-line-parser>, name :: <string>)
+ => (option :: <option>)
+  element(parser.option-long-name-map, name, default: #f)
+    | element(parser.option-short-name-map, name, default: #f)
+    | parser-error("Option not found: %=", name)
 end;
 
-define function option-present?-by-long-name
-    (parser :: <argument-list-parser>, long-name :: <string>)
- => (value :: <boolean>)
-  option-parser-by-long-name(parser, long-name).option-present?;
+define function has-option?
+    (parser :: <command-line-parser>, name :: <string>)
+ => (has? :: <boolean>)
+  (element(parser.option-long-name-map, name, default: #f)
+     | element(parser.option-short-name-map, name, default: #f)) & #t
 end;
 
-define function option-value-by-long-name
-    (parser :: <argument-list-parser>, long-name :: <string>)
+define function get-option-value
+    (parser :: <command-line-parser>, name :: <string>)
  => (value :: <object>)
-  option-parser-by-long-name(parser, long-name).option-value;
+  find-option(parser, name).option-value
 end;
 
 define function add-argument-token
-    (parser :: <argument-list-parser>,
+    (parser :: <command-line-parser>,
      class :: <class>,
      value :: <string>,
      #rest keys, #key, #all-keys)
@@ -143,114 +244,199 @@ define function add-argument-token
 end;
 
 define function argument-tokens-remaining?
-    (parser :: <argument-list-parser>)
+    (parser :: <command-line-parser>)
  => (remaining? :: <boolean>)
   ~parser.tokens.empty?
 end;
 
 define function peek-argument-token
-    (parser :: <argument-list-parser>)
- => (token :: false-or(<argument-token>))
+    (parser :: <command-line-parser>)
+ => (token :: false-or(<token>))
   unless (argument-tokens-remaining?(parser))
-    usage-error()
+    usage-error("Ran out of arguments.")
   end;
   parser.tokens[0];
 end;
 
 define function get-argument-token
-    (parser :: <argument-list-parser>)
- => (token :: false-or(<argument-token>))
+    (parser :: <command-line-parser>)
+ => (token :: false-or(<token>))
   unless (argument-tokens-remaining?(parser))
-    usage-error()
+    usage-error("Ran out of arguments.")
   end;
   pop(parser.tokens);
 end;
 
 
 //======================================================================
-//  <option-parser>
+//  <option>
 //======================================================================
 
-define abstract open primary class <option-parser> (<object>)
-  // Information used by <option-list-parser>
-  slot long-option-names :: <list>,
-    init-keyword: long-options:,
-    init-value: #();
-  slot short-option-names :: <list>,
-    init-keyword: short-options:,
-    init-value: #();
+define abstract open primary class <option> (<object>)
+  // Information supplied by creator.
+  slot option-names :: <sequence> = #(),
+    required-init-keyword: names:;
+  constant slot option-type :: <type> = <object>,
+    init-keyword: type:;
   slot option-might-have-parameters? :: <boolean> = #t;
-  slot option-description :: <string>,
-    init-keyword: description:,
-    init-value: "";
+  slot option-help :: <string> = "",
+    init-keyword: help:;
+  // This shows up in the generated synopsis after the option name.
+  // e.g., "HOST" in  "--hostname  HOST  A host name."  If not supplied
+  // it defaults to the first long option name.
+  slot option-variable :: false-or(<string>) = #f,
+    init-keyword: variable:;
+  // TODO(cgay): This should be a unique-id instead.
+  slot option-default :: <object> = #f,
+    init-keyword: default:;
+
   // Information generated by parsing arguments.
-  slot option-present? :: <boolean>,
-    init-value: #f;
-  slot option-value :: <object>,
-    init-value: #f;
-end class <option-parser>;
+  slot option-present? :: <boolean> = #f;
+  slot option-value :: <object> = #f;
+end class <option>;
 
-define open generic reset-option-parser(parser :: <option-parser>) => ();
+define method initialize
+    (option :: <option>, #key) => ()
+  next-method();
+  let default = option.option-default;
+  let type = option.option-type;
+  if (default & ~instance?(default, type))
+    parser-error("The default value (%=) for option %s is not of the correct "
+                   "type (%s).", default, option.option-names, type);
+  end;
+end method initialize;
 
-define method reset-option-parser(parser :: <option-parser>) => ()
-  parser.option-present? := #f;
-  parser.option-value := #f;
-end method reset-option-parser;
+// Reset the option-value back to the option-default.
+define open generic reset-option
+    (option :: <option>) => ();
 
+// Parse a parameter value passed on the command line (a string)
+// to the type specified by option-type.
+define open generic parse-option-parameter
+    (parameter :: <string>, type :: <type>) => (value :: <object>);
+
+// Read tokens from the command line and decide how to store them.
 define open generic parse-option
-    (opt :: <option-parser>, args :: <argument-list-parser>) => ();
+    (option :: <option>, args :: <command-line-parser>) => ();
 
-define function add-option-parser-by-type
-    (parser :: <argument-list-parser>,
-     class :: <class>,
-     #rest keys)
- => ()
-  add-option-parser(parser, apply(make, class, keys));
-end function add-option-parser-by-type;
+
+define method reset-option
+    (option :: <option>) => ()
+  option.option-present? := #f;
+  option.option-value := option.option-default;
+end method reset-option;
+
+define method visible-option-name
+    (raw-name :: <string>) => (dash-name :: <string>)
+  concatenate(if (raw-name.size = 1) "-" else "--" end, raw-name)
+end;
+
+
+// ----------------------
+// parse-option-parameter
+// ----------------------
+
+// Default method just returns parameter.
+define method parse-option-parameter
+    (param :: <string>, type :: <type>) => (value :: <string>)
+  param
+end;
+
+// This is essentially for "float or int", which could be <real>, but
+// <number> is also a natural choice.
+define method parse-option-parameter
+    (param :: <string>, type :: subclass(<number>)) => (value :: <number>)
+  let arg = lowercase(param);
+  /*  no string-to-float yet
+  if (member?('.', arg) | member?('e', arg))
+    string-to-float(param)
+  */
+  if (starts-with?(param, "0x") & hexadecimal-digit?(param, start: 2))
+    string-to-integer(copy-sequence(param, start: 2), base: 16)
+  elseif (starts-with?(param, "0") & octal-digit?(param))
+    string-to-integer(param, base: 8)
+  elseif (decimal-digit?(param))
+    string-to-integer(param)
+  else
+    usage-error("Expected a number but got %=", param);
+  end
+end;
+
+define method parse-option-parameter
+    (param :: <string>, type == <boolean>) => (value :: <boolean>)
+  if (member?(param, #("yes", "true", "on"), test: string-equal-ic?))
+    #t
+  elseif (member?(param, #("no", "false", "off"), test: string-equal-ic?))
+    #t
+  else
+    usage-error("Expected yes/no, true/false, or on/off but got %=", param);
+  end
+end;
+
+define method parse-option-parameter
+    (param :: <string>, type == <symbol>) => (value :: <symbol>)
+  as(<symbol>, param)
+end;
+
+define method parse-option-parameter
+    (param :: <string>, type :: subclass(<sequence>)) => (value :: <sequence>)
+  as(type, map(strip, split(param, ",")))
+end;
+
+// override subclass(<sequence>) method
+define method parse-option-parameter
+    (param :: <string>, type == <string>) => (value :: <string>)
+  param
+end;
+
+
+define method short-names
+    (option :: <option>) => (names :: <list>)
+  choose(method (name :: <string>)
+           name.size = 1
+         end,
+         option.option-names)
+end;
+
+define method long-names
+    (option :: <option>) => (names :: <list>)
+  choose(method (name :: <string>)
+           name.size > 1
+         end,
+         option.option-names)
+end;
 
 
 //======================================================================
-//  <argument-token> (and subclasses)
+//  <token> (and subclasses)
 //======================================================================
 
-define abstract class <argument-token> (<object>)
+define abstract class <token> (<object>)
   constant slot token-value :: <string>,
     required-init-keyword: value:;
-end class <argument-token>;
+end;
 
-define class <regular-argument-token> (<argument-token>)
-end class <regular-argument-token>;
+define class <positional-option-token> (<token>)
+end;
 
-define abstract class <option-token> (<argument-token>)
-end class <option-token>;
+define abstract class <option-token> (<token>)
+end;
 
 define class <short-option-token> (<option-token>)
   constant slot tightly-bound-to-next-token?,
     init-keyword: tightly-bound?:,
     init-value: #f;
-end class <short-option-token>;
+end;
 
 define class <long-option-token> (<option-token>)
-end class <long-option-token>;
+end;
 
-define class <equals-token> (<argument-token>)
-end class <equals-token>;
-
-
-//======================================================================
-//  usage-error
-//======================================================================
-
-define class <usage-error> (<error>)
-end class <usage-error>;
-
-define function usage-error () => ()
-  error(make(<usage-error>));
+define class <equals-token> (<token>)
 end;
 
 
 //======================================================================
-//  parse-arguments
+//  parse-command-line
 //======================================================================
 
 // Break up our arguments around '--' in the traditional fashion.
@@ -302,7 +488,7 @@ end function chop-args;
 
 // Turn a deque of args into an internal deque of tokens.
 define function tokenize-args
-    (parser :: <argument-list-parser>,
+    (parser :: <command-line-parser>,
      args :: <deque> /* of: <string> */)
  => ()
   until (args.empty?)
@@ -312,11 +498,10 @@ define function tokenize-args
       // Attempt to get the next argument a little bit early.
       method next-arg() => (arg :: <string>)
         if (~args.empty?)
-          pop(args);
+          pop(args)
         else
-          usage-error();
-          ""                                           // stifle warning
-        end;
+          usage-error("Ran out of arguments.");
+        end
       end method,
 
       // Add a token to our deque
@@ -329,7 +514,7 @@ define function tokenize-args
     case
       (arg = "=") =>
         token(<equals-token>, "=");
-        token(<regular-argument-token>, next-arg());
+        token(<positional-option-token>, next-arg());
 
       (arg.size > 2 & arg[0] = '-' & arg[1] = '-') =>
         token(<long-option-token>, copy-sequence(arg, start: 2));
@@ -337,7 +522,7 @@ define function tokenize-args
       (arg.size > 0 & arg[0] = '-') =>
         if (arg.size = 1)
           // Probably a fake filename representing stdin ('cat -')
-          token(<regular-argument-token>, "-");
+          token(<positional-option-token>, "-");
         else
           block (done)
             for (i from 1 below arg.size)
@@ -348,11 +533,11 @@ define function tokenize-args
                     & i + 1 < arg.size)
                 // Take rest of argument, and use it as a parameter.
                 token(<short-option-token>, opt, tightly-bound?: #t);
-                token(<regular-argument-token>,
+                token(<positional-option-token>,
                       copy-sequence(arg, start: i + 1));
                 done();
               else
-                // A regular, solitary option with no parameter.
+                // A solitary option with no parameter.
                 token(<short-option-token>, opt);
               end if;
             end for;
@@ -360,118 +545,155 @@ define function tokenize-args
         end if;
 
       otherwise =>
-        token(<regular-argument-token>, arg);
+        token(<positional-option-token>, arg);
     end case;
   end until;
 end function tokenize-args;
 
-define function get-option-parser
-    (parsers :: <string-table>, key :: <string>)
- => (parser :: <option-parser>)
-  let parser = element(parsers, key, default: #f);
-  unless (parser)
-    usage-error();
+define open generic parse-command-line
+    (parser :: <command-line-parser>, argv :: <sequence>) => ();
+
+define method parse-command-line
+    (parser :: <command-line-parser>, argv :: <sequence>)
+ => ()
+  reset-parser(parser);
+  let do-help? = parser.provide-help-option?;
+  if (do-help? & ~any?(curry(has-option?, parser),
+                       parser.help-option.option-names))
+    add-option(parser, parser.help-option);
   end;
-  parser;
-end;
-
-define function parse-arguments
-    (parser :: <argument-list-parser>, argv :: <sequence>)
- => (success? :: <boolean>)
   block ()
-    parser.tokens.size := 0;
-    parser.regular-arguments.size := 0;
-    do(reset-option-parser, parser.option-parsers);
+    %parse-command-line(parser, argv);
+  exception (ex :: <usage-error>)
+    if (do-help?)
+      format(*standard-output*,
+             "Error: %s\nUse %s to see command-line options.\n",
+             ex,
+             join(map(visible-option-name, parser.help-option.option-names), ", ",
+                  conjunction: " or "));
+      // Rather than calling exit-application here we raise a subclass
+      // of <usage-error>.  If/when exit-application raises an
+      // exception rather than calling exit() we can call it here
+      // instead.  That simplifies the calling code (since it doesn't
+      // HAVE to handle errors), allows the caller to handle it if it
+      // wants, and makes THIS code testable.
+    end;
+    signal(ex)
+  end;
+  if (do-help? & parser.help-option.option-value)
+    print-synopsis(parser, *standard-output*);
+    error(make(<help-requested>));
+  end;
+end method parse-command-line;
 
-    // Split our args around '--' and chop them around '='.
-    let (clean-args, extra-args) = split-args(argv);
-    let chopped-args = chop-args(clean-args);
+define function %parse-command-line
+    (parser :: <command-line-parser>, argv :: <sequence>) => ()
+  // Split our args around '--' and chop them around '='.
+  let (clean-args, extra-args) = split-args(argv);
+  let chopped-args = chop-args(clean-args);
 
-    // Tokenize our arguments and suck them into the parser.
-    tokenize-args(parser, chopped-args);
+  // Tokenize our arguments and suck them into the parser.
+  tokenize-args(parser, chopped-args);
 
-    // Process our tokens.
-    while (argument-tokens-remaining?(parser))
-      let token = peek-argument-token(parser);
-      select (token by instance?)
-        <regular-argument-token> =>
-          get-argument-token(parser);
-          parser.regular-arguments := add!(parser.regular-arguments,
-                                           token.token-value);
-        <short-option-token> =>
-          let opt-parser =
-            get-option-parser(parser.option-short-name-map, token.token-value);
-          parse-option(opt-parser, parser);
-          opt-parser.option-present? := #t;
-        <long-option-token> =>
-          let opt-parser =
-            get-option-parser(parser.option-long-name-map, token.token-value);
-          parse-option(opt-parser, parser);
-          opt-parser.option-present? := #t;
-        otherwise =>
-          usage-error();
-      end select;
-    end while;
+  // Process our tokens.
+  while (argument-tokens-remaining?(parser))
+    let token = peek-argument-token(parser);
+    select (token by instance?)
+      <positional-option-token> =>
+        get-argument-token(parser);
+        parser.positional-options := add!(parser.positional-options,
+                                          token.token-value);
+      <short-option-token> =>
+        let option =
+          element(parser.option-short-name-map, token.token-value, default: #f)
+          // TODO(cgay): don't hard-code '-'
+          | usage-error("Unrecognized option: -%s", token.token-value);
+        parse-option(option, parser);
+        option.option-present? := #t;
+      <long-option-token> =>
+        let option =
+          element(parser.option-long-name-map, token.token-value, default: #f)
+          // TODO(cgay): don't hard-code '--'
+          | usage-error("Unrecognized option: --%s", token.token-value);
+        parse-option(option, parser);
+        option.option-present? := #t;
+      otherwise =>
+        // TODO(cgay): log.error("Unrecognized token: %=", token);
+        parser-error("Unrecognized token type: %=", token);
+    end select;
+  end while;
 
-    // And append any more regular arguments from after the '--'.
-    for (arg in extra-args)
-      parser.regular-arguments := add!(parser.regular-arguments, arg);
-    end for;
-
-    #t;
-  exception (<usage-error>)
-    #f;
-  end block;
-end function parse-arguments;
+  // And append any more positional options from after the '--'.
+  for (arg in extra-args)
+    parser.positional-options := add!(parser.positional-options, arg);
+  end for;
+end function %parse-command-line;
 
 define open generic print-synopsis
- (parser :: <argument-list-parser>, stream :: <stream>, #key);
+    (parser :: <command-line-parser>, stream :: <stream>, #key) => ();
 
 // todo -- Generate the initial "Usage: ..." line as well.
+// TODO(cgay): Show all option names, not just the first.
+//
+// Example output:
+// Usage: foo [options] arg1 ...
+//   -c, --coolness LEVEL      Level of coolness, 1-3.
+//   -r RECURSIVE              Be cool recursively.
+//       --alacrity ALACRITY   Level of alacrity.
+// Short options come first on a line because they're always the
+// same length (except when there are many).  Long options start
+// indented past one short option if there is no corresponding
+// short option.  If there is no variable: provided for the option
+// it defaults to the first long option name.
 define method print-synopsis
-    (parser :: <argument-list-parser>,
-     stream :: <stream>,
+    (parser :: <command-line-parser>, stream :: <stream>,
      #key usage :: false-or(<string>),
           description :: false-or(<string>))
-  if (usage) format(stream, "Usage: %s\n", usage); end;
-  if (description) format(stream, "%s\n", description); end;
-  if (usage | description) new-line(stream); end;
-  local method print-option (short, long, description);
-          let short = select (short by instance?)
-                        <list> => ~empty?(short) & first(short);
-                        <string> => short;
-                        otherwise => #f;
-                      end select;
-          let long = select (long by instance?)
-                       <pair> => ~empty?(long) & first(long);
-                       <string> => long;
-                       otherwise => #f;
-                     end select;
-          write(stream, "  ");
-          if (short)
-            format(stream, "-%s", short);
-            write(stream, if (long) ", " else "  " end);
-          else
-            write(stream, "    ");
-          end if;
-          if (long)
-            format(stream, "--%s", long);
-            for (i from 1 to 28 - 2 - size(long))
-              write-element(stream, ' ');
-            end for;
-          else
-            format(stream, "%28s", "");
-          end if;
-          write(stream, description);
-          new-line(stream);
-        end method print-option;
+ => ()
+  usage & format(stream, "Usage: %s\n", usage);
+  description & format(stream, "%s\n", description);
 
-  for (option in option-parsers(parser))
-    print-option(short-option-names(option),
-                 long-option-names(option),
-                 option-description(option));
+  // These contain an entry for every line, sometimes just "".
+  let (names, docs) = synopsis-columns(parser);
+  let name-width = reduce1(max, map(size, names));
+  for (name in names, doc in docs)
+    format(stream, "%s  %s\n", pad-right(name, name-width), doc);
   end;
 end method print-synopsis;
+
+define function synopsis-columns
+    (parser :: <command-line-parser>)
+ => (names :: <sequence>, docs :: <sequence>)
+  let names = make(<stretchy-vector>);
+  let docs = make(<stretchy-vector>);
+  let any-shorts? = any?(method (opt) ~empty?(opt.short-names) end,
+                         parser.option-parsers);
+  for (option in parser.option-parsers)
+    // TODO(cgay): Make these prefixes (-- and -) configurable.
+    let longs = map(curry(concatenate, "--"), option.long-names);
+    let shorts = map(curry(concatenate, "-"), option.short-names);
+    let name = concatenate(join(concatenate(shorts, longs), ", "),
+                           " ",
+                           case
+                             instance?(option, <flag-option>) => "";
+                             empty?(longs) => "X";
+                             otherwise =>
+                               option.option-variable
+                                 | uppercase(option.long-names[0])
+                           end);
+    let indent = if (empty?(shorts) & any-shorts?)
+                   // Makes long options align (usually).
+                   "      "
+                 else
+                   "  "
+                 end;
+    add!(names, concatenate(indent, name));
+    // TODO(cgay): Wrap doc text.
+    add!(docs, option.option-help);
+  end for;
+  values(names, docs)
+end function synopsis-columns;
+
 
 /*
   Semi-comprehensible design notes, here for historical interest:

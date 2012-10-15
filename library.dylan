@@ -35,6 +35,7 @@ copyright: Copyright 1998 Eric Kidd
 define library command-line-parser
   use common-dylan;
   use io;
+  use strings;
 
   export
     command-line-parser,
@@ -44,71 +45,74 @@ end library;
 // Only used when defining new option-parser subclasses.
 define module option-parser-protocol
   create
-    // <argument-list-parser>
+    // <command-line-parser>
+      reset-parser,
       argument-tokens-remaining?,
       get-argument-token,
       peek-argument-token,
+      find-option,
 
-    // <option-parser>
-      short-option-names, short-option-names-setter,
-      long-option-names, long-option-names-setter,
-      option-description, option-description-setter,
-      option-default-value, option-default-value-setter,
+    // <option>
+    <option>,
+      option-present?,
+      option-names, long-names, short-names,
+      option-help, option-help-setter,
+      option-default, option-default-setter,
       option-might-have-parameters?, option-might-have-parameters?-setter,
-      option-value-setter,
-    reset-option-parser,
+      option-value, option-value-setter,
+      option-variable, option-variable-setter,
+    reset-option,
     parse-option,
-
-    <negative-option-parser>,
     negative-option?,
 
-    <argument-token>,
+    <token>,
       token-value,
-    <regular-argument-token>,
+    <positional-option-token>,
     <option-token>,
     <short-option-token>,
       tightly-bound-to-next-token?, // XXX - not implemented fully
     <long-option-token>,
-    <equals-token>,
-
-    usage-error;
-end module;
+    <equals-token>;
+end module option-parser-protocol;
 
 // Used by most programs.
 define module command-line-parser
   use common-dylan, exclude: { format-to-string };
+  use format;
   use option-parser-protocol;
+  use standard-io;
+  use strings;
+  use streams;
 
   export
-    <argument-list-parser>,
-      regular-arguments,
-    add-option-parser,
-    add-option-parser-by-type,
-    parse-arguments,
-    option-parser-by-long-name,
-    option-present?-by-long-name,
-    option-value-by-long-name,
+    <command-line-parser>,
+    positional-options,
+    add-option,
+    parse-command-line,
+    get-option-value,
     print-synopsis,
 
-    <option-parser>,
-      option-present?,
-      option-value,
+    // This is exported from the main module because it is expected to
+    // be used relatively frequently for user types.
+    parse-option-parameter,
 
-    <simple-option-parser>,
-    <parameter-option-parser>,
-    <repeated-parameter-option-parser>,
-    <optional-parameter-option-parser>,
-    <keyed-option-parser>;
+    <flag-option>,
+    <parameter-option>,
+    <repeated-parameter-option>,
+    <optional-parameter-option>,
+    <keyed-option>,
 
-  use streams;
-  use format;
+    <command-line-parser-error>,
+      <usage-error>,
+        <help-requested>,
+    usage-error;
 
   export
-    argument-parser-definer,
-    defargparser-rec,
-    defargparser-aux,
-    defargparser-class,
-    defargparser-init,
-    defargparser-accessors,
-    defargparser-synopsis;
-end module;
+    command-line-definer,
+    defcmdline-rec,
+    defcmdline-aux,
+    defcmdline-class,
+    defcmdline-init,
+    defcmdline-accessors,
+    defcmdline-synopsis;
+end module command-line-parser;
