@@ -660,6 +660,10 @@ define method print-synopsis
      #key usage :: false-or(<string>),
           description :: false-or(<string>))
  => ()
+  if (~usage)
+    let app = locator-base(as(<file-locator>, application-name()));
+    usage := format-to-string("%s [options]", app);
+  end;
   usage & format(stream, "Usage: %s\n", usage);
   description & format(stream, "%s\n", description);
 
