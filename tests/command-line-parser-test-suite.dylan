@@ -44,6 +44,7 @@ define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
   test test-command-line-parser;
   test test-synopsis;
+  test test-usage;
   test test-duplicate-name-error;
   test test-option-type;
   test test-option-default;
@@ -135,6 +136,24 @@ define test test-synopsis ()
                  "  -D, --define DEFINE          \n";
   check-equal("synopsis same?", expected, synopsis);
 end;
+
+// Verify that the usage: and description: passed to parse-command-line
+// are displayed correctly.
+define test test-usage ()
+  let parser = make(<command-line-parser>);
+  add-option(parser, make(<flag-option>, names: #("x")));
+  dynamic-bind (*standard-output* = make(<string-stream>,
+                                         direction: #"output"))
+    check-condition("", <help-requested>,
+                    parse-command-line(parser, #("--help"),
+                                       usage: "u", description: "d"));
+    let actual = *standard-output*.stream-contents;
+    let expected = "Usage: u\nd\n";
+    check-true(format-to-string("%= starts with %=?", actual, expected),
+               starts-with?(actual, expected));
+  end;
+end test;
+
 
 define test test-duplicate-name-error ()
   let parser = make(<command-line-parser>);

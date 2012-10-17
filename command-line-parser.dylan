@@ -551,10 +551,14 @@ define function tokenize-args
 end function tokenize-args;
 
 define open generic parse-command-line
-    (parser :: <command-line-parser>, argv :: <sequence>) => ();
+    (parser :: <command-line-parser>, argv :: <sequence>,
+     #key usage, description)
+ => ();
 
 define method parse-command-line
-    (parser :: <command-line-parser>, argv :: <sequence>)
+    (parser :: <command-line-parser>, argv :: <sequence>,
+     #key usage :: false-or(<string>),
+          description :: false-or(<string>))
  => ()
   reset-parser(parser);
   let do-help? = parser.provide-help-option?;
@@ -581,7 +585,8 @@ define method parse-command-line
     signal(ex)
   end;
   if (do-help? & parser.help-option.option-value)
-    print-synopsis(parser, *standard-output*);
+    print-synopsis(parser, *standard-output*,
+                   usage: usage, description: description);
     error(make(<help-requested>));
   end;
 end method parse-command-line;
@@ -630,10 +635,15 @@ define function %parse-command-line
 end function %parse-command-line;
 
 define open generic print-synopsis
-    (parser :: <command-line-parser>, stream :: <stream>, #key) => ();
+    (parser :: <command-line-parser>, stream :: <stream>,
+     #key usage, description)
+ => ();
 
 // todo -- Generate the initial "Usage: ..." line as well.
 // TODO(cgay): Show all option names, not just the first.
+// TODO(cgay): Annotate the repeatable options with "[*]"
+// and add "[*] these options may be used multiple times"
+// at the bottom, if any.
 //
 // Example output:
 // Usage: foo [options] arg1 ...
@@ -650,6 +660,10 @@ define method print-synopsis
      #key usage :: false-or(<string>),
           description :: false-or(<string>))
  => ()
+  if (~usage)
+    let app = locator-base(as(<file-locator>, application-name()));
+    usage := format-to-string("%s [options]", app);
+  end;
   usage & format(stream, "Usage: %s\n", usage);
   description & format(stream, "%s\n", description);
 
