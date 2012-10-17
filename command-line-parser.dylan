@@ -68,8 +68,6 @@ copyright: see below
 //         and the syntax for specifying "syntax" and docstring is bizarre at
 //         best.  --cgay 2006.11.27
 
-// TODO(cgay): documentation!
-
 // TODO(cgay): tests!
 
 // TODO(cgay): <choice-option>: --foo=a|b|c (#f as choice means option
@@ -114,12 +112,12 @@ copyright: see below
 //  Errors
 //======================================================================
 
-define class <command-line-parser-error> (<format-string-condition>, <error>)
+define open class <command-line-parser-error> (<format-string-condition>, <error>)
 end;
 
 // For when the user provides an invalid command-line.
 // These errors will be displayed to the user via condition-to-string.
-define class <usage-error> (<command-line-parser-error>)
+define open class <usage-error> (<command-line-parser-error>)
 end;
 
 // This isn't quite right, but it gives callers a way to handle
@@ -330,6 +328,16 @@ define method visible-option-name
     (raw-name :: <string>) => (dash-name :: <string>)
   concatenate(if (raw-name.size = 1) "-" else "--" end, raw-name)
 end;
+
+
+define open generic format-option-usage
+    (option :: <option>) => (usage :: <string>);
+
+define method format-option-usage
+    (option :: <option>) => (usage :: <string>)
+  option.visible-option-name
+end;
+
 
 
 // ----------------------
@@ -570,7 +578,7 @@ define method parse-command-line
     %parse-command-line(parser, argv);
   exception (ex :: <usage-error>)
     if (do-help?)
-      format(*standard-output*,
+      format(*standard-error*,
              "Error: %s\nUse %s to see command-line options.\n",
              ex,
              join(map(visible-option-name, parser.help-option.option-names), ", ",
@@ -639,7 +647,6 @@ define open generic print-synopsis
      #key usage, description)
  => ();
 
-// todo -- Generate the initial "Usage: ..." line as well.
 // TODO(cgay): Show all option names, not just the first.
 // TODO(cgay): Annotate the repeatable options with "[*]"
 // and add "[*] these options may be used multiple times"
@@ -664,7 +671,7 @@ define method print-synopsis
     let app = locator-base(as(<file-locator>, application-name()));
     usage := format-to-string("%s [options]", app);
   end;
-  usage & format(stream, "Usage: %s\n", usage);
+  format(stream, usage | generate-usage(parser));
   description & format(stream, "%s\n", description);
 
   // These contain an entry for every line, sometimes just "".
@@ -707,6 +714,30 @@ define function synopsis-columns
   end for;
   values(names, docs)
 end function synopsis-columns;
+
+// Generate a default usage message based on the given parser.
+// TODO(cgay): This can be improved once the parser knows more about
+//   how many positional arguments are allowed.
+define method generate-usage
+    (parser :: <command-line-parser>) => (usage :: <string>)
+  let optionals? = #f;
+  let requireds = make(<stretchy-vector>);
+  for (option in parser.option-parsers)
+    if (#f /* TODO: option.required? */)
+      add!(requireds, option)
+    else
+      optionals? := #t;
+    end;
+  end;
+  with-output-to-string (usage)
+    format(usage, "Usage: %s", executable);
+    optionals? & format(usage, " [options]");
+    if (~empty?(requireds))
+      format(usage, " %s", join(map(format-option-usage, requireds), " "));
+    end;
+    // TODO(cgay): positional1 positional2 ...
+  end
+end method generate-usage;
 
 
 /*
