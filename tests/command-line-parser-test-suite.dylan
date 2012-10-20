@@ -126,9 +126,13 @@ end test test-command-line-parser;
 define test test-synopsis ()
   let parser = make-parser();
   let synopsis = with-output-to-string (stream)
-                   print-synopsis(parser, stream)
+                   print-synopsis(parser, stream,
+                                  usage: "Usage: foo",
+                                  description: "ABCDEFG")
                  end;
-  let expected = "  -v, -q, --verbose, --quiet   Be more or less verbose.\n"
+  let expected = "Usage: foo\n"
+                 "ABCDEFG\n"
+                 "  -v, -q, --verbose, --quiet   Be more or less verbose.\n"
                  "  -f, -B, --foo, --no-foo      Be more or less foonly.\n"
                  "  -Q, --quux QUUX              Quuxly quacksly\n"
                  "  -O, --optimize LEVEL         \n"
@@ -148,7 +152,7 @@ define test test-usage ()
                     parse-command-line(parser, #("--help"),
                                        usage: "u", description: "d"));
     let actual = *standard-output*.stream-contents;
-    let expected = "Usage: u\nd\n";
+    let expected = "u\nd\n";
     check-true(format-to-string("%= starts with %=?", actual, expected),
                starts-with?(actual, expected));
   end;
