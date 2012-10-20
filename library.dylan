@@ -65,6 +65,7 @@ define module option-parser-protocol
     reset-option,
     parse-option,
     negative-option?,
+    format-option-usage,
 
     <token>,
       token-value,

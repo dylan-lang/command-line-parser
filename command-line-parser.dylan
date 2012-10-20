@@ -329,13 +329,18 @@ define method visible-option-name
   concatenate(if (raw-name.size = 1) "-" else "--" end, raw-name)
 end;
 
+define method canonical-option-name
+    (option :: <option>) => (dash-name :: <string>)
+  option.option-names.first.visible-option-name
+end;
+
 
 define open generic format-option-usage
     (option :: <option>) => (usage :: <string>);
 
 define method format-option-usage
     (option :: <option>) => (usage :: <string>)
-  option.visible-option-name
+  option.canonical-option-name
 end;
 
 
@@ -667,10 +672,6 @@ define method print-synopsis
      #key usage :: false-or(<string>),
           description :: false-or(<string>))
  => ()
-  if (~usage)
-    let app = locator-base(as(<file-locator>, application-name()));
-    usage := format-to-string("%s [options]", app);
-  end;
   format(stream, usage | generate-usage(parser));
   description & format(stream, "%s\n", description);
 
@@ -723,19 +724,21 @@ define method generate-usage
   let optionals? = #f;
   let requireds = make(<stretchy-vector>);
   for (option in parser.option-parsers)
-    if (#f /* TODO: option.required? */)
+    if (#f /* TODO(cgay): option.required? */)
       add!(requireds, option)
     else
       optionals? := #t;
     end;
   end;
   with-output-to-string (usage)
-    format(usage, "Usage: %s", executable);
+    let app = locator-base(as(<file-locator>, application-name()));
+    format(usage, "Usage: %s", app);
     optionals? & format(usage, " [options]");
     if (~empty?(requireds))
       format(usage, " %s", join(map(format-option-usage, requireds), " "));
     end;
     // TODO(cgay): positional1 positional2 ...
+    format(usage, "\n");
   end
 end method generate-usage;
 
