@@ -104,6 +104,11 @@ define method parse-option
                               option.option-type);
 end method parse-option;
 
+define method format-option-usage
+    (option :: <parameter-option>) => (usage :: <string>)
+  format-to-string("%s=%s", option.canonical-option-name, option.option-variable)
+end;
+
 
 //======================================================================
 //  <repeated-parameter-option>
@@ -137,6 +142,10 @@ define method parse-option
                                    option.option-type));
 end method parse-option;
 
+define method format-option-usage
+    (option :: <repeated-parameter-option>) => (usage :: <string>)
+  format-to-string("%s=%s...", option.canonical-option-name, option.option-variable)
+end;
 
 //======================================================================
 //  <optional-parameter-option>
@@ -176,6 +185,11 @@ define method parse-option
         #t;
     end case;
 end method parse-option;
+
+define method format-option-usage
+    (option :: <optional-parameter-option>) => (usage :: <string>)
+  format-to-string("%s[=%s]", option.canonical-option-name, option.option-variable)
+end;
 
 
 //======================================================================
@@ -218,3 +232,8 @@ define method parse-option
     end;
   option.option-value[key] := value;
 end method parse-option;
+
+define method format-option-usage
+    (option :: <keyed-option>) => (usage :: <string>)
+  format-to-string("%sKEY=%s", option.canonical-option-name, option.option-variable)
+end;
