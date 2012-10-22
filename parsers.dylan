@@ -46,8 +46,7 @@ copyright: see below
 //    -q, -v, --quiet, --verbose
 
 define open primary class <flag-option> (<option>)
-  // TODO(cgay): This should be <sequence> not <list>.
-  constant slot negative-names :: <list> = #(),
+  constant slot negative-names :: <sequence> = #(),
     init-keyword: negative-names:;
   keyword type:, init-value: <boolean>;
 end;
@@ -61,6 +60,9 @@ define method initialize
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
   // list.
+  // TODO(cgay): Do not like.  This is the only reason option-names can't
+  // be a constant slot.  Replace option-names with %option-names slot
+  // and make option-names do this concatenation.
   option.option-names := concatenate(option.option-names, option.negative-names);
 end method;
 
