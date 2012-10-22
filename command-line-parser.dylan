@@ -1,6 +1,6 @@
 module: command-line-parser
 synopsis: Parse command-line options.
-authors: Eric Kidd
+authors: Eric Kidd, Carl Gay
 copyright: see below
 
 //======================================================================
@@ -68,13 +68,8 @@ copyright: see below
 //         and the syntax for specifying "syntax" and docstring is bizarre at
 //         best.  --cgay 2006.11.27
 
-// TODO(cgay): tests!
-
 // TODO(cgay): <choice-option>: --foo=a|b|c (#f as choice means option
 // value is optional?)
-
-// TODO(cgay): Make print-synopsis support %prog, %default, %choices,
-// etc. and display the option type (e.g., "integer", "number", "string")
 
 // TODO(cgay): Add a required: (or required?: ?) init keyword that
 // makes non-positional args required else an error is generated.
@@ -277,7 +272,7 @@ define abstract open primary class <option> (<object>)
   constant slot option-type :: <type> = <object>,
     init-keyword: type:;
   slot option-might-have-parameters? :: <boolean> = #t;
-  constant slot option-help :: <string> = "",
+  constant slot %option-help :: <string> = "",
     init-keyword: help:;
   // This shows up in the generated synopsis after the option name.
   // e.g., "HOST" in  "--hostname  HOST  A host name."  If not supplied
@@ -307,6 +302,57 @@ end method initialize;
 // Reset the option-value back to the option-default.
 define open generic reset-option
     (option :: <option>) => ();
+
+// TODO(cgay): Make <boolean>s print as true/false in %default
+// substitutions.  There's some subtlety for <flag-option> because of
+// negative options.
+// TODO(cgay): "%choices"
+define variable *percent-substitutions*
+  = list(list("%%", method (_) "%" end),  // must come first
+         list("%default", method (option)
+                            format-to-string("%s", option.option-default)
+                          end),
+         list("%app", method (_)
+                        locator-base(as(<file-locator>, application-name()))
+                      end));
+
+// For use by extension modules.
+define function add-percent-substitution
+    (token :: <string>, fn :: <function>) => ()
+  *percent-substitutions*
+    := concatenate(*percent-substitutions*, list(list(token, fn)));
+end;
+
+// Return a help string (description) for an option with substitutions
+// performed for %default, %app, etc.
+define method option-help
+    (option :: <option>) => (help :: <string>)
+  // TODO(cgay): If %prefix and %prefixplusmore exist, the result
+  // depends on the order of items in *percent-substitutions*, which
+  // is bad.
+  let text = option.%option-help;
+  iterate loop (i = 0)
+    if (i >= text.size)
+      text
+    elseif (text[i] = '%')
+      let epos = i + 1;
+      let done = #f;
+      for (item in *percent-substitutions*,
+           until: done)
+        let (token, fn) = apply(values, item);
+        if (string-equal?(text, token, start1: i, end1: min(i + token.size, text.size)))
+          let subst = fn(option);
+          text := replace-substrings(text, token, subst, start: i, end: i + token.size);
+          epos := epos + subst.size - 1;
+          done := #t;
+        end;
+      end;
+      loop(epos)
+    else
+      loop(i + 1)
+    end
+  end
+end method option-help;
 
 define method option-variable
     (option :: <option>) => (variable-name :: <string>)

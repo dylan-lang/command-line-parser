@@ -52,6 +52,7 @@ define module option-parser-protocol
       get-argument-token,
       peek-argument-token,
       find-option,
+      add-percent-substitution,
 
     // <option>
     <option>,
