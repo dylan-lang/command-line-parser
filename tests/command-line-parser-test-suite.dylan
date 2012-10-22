@@ -43,7 +43,8 @@ synopsis: Test suite for the command-line-parser  library.
 define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
   test test-command-line-parser;
-  test test-synopsis;
+  test test-synopsis-format;
+  test test-help-substitutions;
   test test-usage;
   test test-duplicate-name-error;
   test test-option-type;
@@ -123,7 +124,7 @@ end test test-command-line-parser;
 
 // This test is pretty brittle.  Would be good to make it ignore
 // whitespace to some extent.
-define test test-synopsis ()
+define test test-synopsis-format ()
   let parser = make-parser();
   let synopsis = with-output-to-string (stream)
                    print-synopsis(parser, stream,
@@ -140,6 +141,14 @@ define test test-synopsis ()
                  "  -D, --define DEFINE          \n";
   check-equal("synopsis same?", expected, synopsis);
 end;
+
+define test test-help-substitutions ()
+  let option = make(<flag-option>,
+                    names: #("flag"),
+                    default: #t,
+                    help: "%%%default%%prog%");
+  check-equal("", "%#t%prog%", option.option-help);
+end;  
 
 // Verify that the usage: and description: passed to parse-command-line
 // are displayed correctly.
