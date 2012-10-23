@@ -49,6 +49,7 @@ define suite command-line-parser-test-suite
   test test-duplicate-name-error;
   test test-option-type;
   test test-option-default;
+  test test-choice-option;
   test test-defcmdline;
 end suite;
 
@@ -235,6 +236,23 @@ define test test-option-default ()
                                              type: <integer>,
                                              default: 1234)));
 end test test-option-default;
+
+
+define test test-choice-option ()
+  let parser = make(<command-line-parser>);
+  add-option(parser, make(<choice-option>,
+                          names: #("foo"),
+                          choices: #("a", "b"),
+                          test: string-equal-ic?));
+  check-condition("bad choice", <usage-error>,
+                  parse-command-line(parser, #("--foo=x")));
+
+  check-no-condition("good 1", parse-command-line(parser, #("--foo=a")));
+  check-equal("", "a", get-option-value(parser, "foo"));
+
+  check-no-condition("nocase test", parse-command-line(parser, #("--foo=B")));
+  check-equal("nocase value", "B", get-option-value(parser, "foo"));
+end;
 
 define command-line <defcmdline-test-parser> ()
   synopsis print-defcmdline-test-synopsis,

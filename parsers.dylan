@@ -46,8 +46,7 @@ copyright: see below
 //    -q, -v, --quiet, --verbose
 
 define open primary class <flag-option> (<option>)
-  // TODO(cgay): This should be <sequence> not <list>.
-  constant slot negative-names :: <list> = #(),
+  constant slot negative-names :: <sequence> = #(),
     init-keyword: negative-names:;
   keyword type:, init-value: <boolean>;
 end;
@@ -61,6 +60,9 @@ define method initialize
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
   // list.
+  // TODO(cgay): Do not like.  This is the only reason option-names can't
+  // be a constant slot.  Replace option-names with %option-names slot
+  // and make option-names do this concatenation.
   option.option-names := concatenate(option.option-names, option.negative-names);
 end method;
 
@@ -237,3 +239,37 @@ define method format-option-usage
     (option :: <keyed-option>) => (usage :: <string>)
   format-to-string("%sKEY=%s", option.canonical-option-name, option.option-variable)
 end;
+
+
+//======================================================================
+//  <choice-option>
+//======================================================================
+//
+// Limits possible values to a set of predefined choices.
+
+// TODO(cgay): It should be possible to make one of the choices be
+// no-value, but subclassing <optional-parameter-option> isn't right.
+// Need to get rid of <optional-parameter-option> and replace it with
+// a value-optional?: init arg on <option> or something.  Probably the
+// same for repeated options.
+
+define open class <choice-option> (<parameter-option>)
+  constant slot option-choices :: <sequence>,
+    required-init-keyword: choices:;
+  constant slot option-test :: <function> = \=,
+    init-keyword: test:;
+end;
+
+define method parse-option
+    (option :: <choice-option>, parser :: <command-line-parser>)
+ => ()
+  next-method();
+  if (~member?(option.option-value, option.option-choices,
+               test: option.option-test))
+    usage-error("%= is not a valid value for the %s option.  "
+                  "Valid choices are %s.",
+                option.option-value,
+                option.canonical-option-name,
+                join(option.option-choices, ", ", conjunction: " and "));
+  end;
+end method parse-option;
