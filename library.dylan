@@ -104,6 +104,7 @@ define module command-line-parser
     <parameter-option>,
     <repeated-parameter-option>,
     <optional-parameter-option>,
+    <choice-option>,
     <keyed-option>,
 
     <command-line-parser-error>,
