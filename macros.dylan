@@ -42,19 +42,10 @@ copyright: see below
 // interface for parser definition and option access.
 //
 //
-// Examples
-// ========
-//
-// Below you can find a short overview of defcmdline's features.
-// If you are looking for working examples, have a look at
-//   <URL:http://www.inf.fu-berlin.de/~lichtebl/dylan/>
-//
-//
 // Emacs
 // =====
 //
-// You will want to edit your .emacs to recognize defcmdline macros and
-// keywords:
+// You will want to edit your .emacs to recognize keywords:
 //
 // (add-hook 'dylan-mode-hook
 //           (lambda ()
@@ -75,7 +66,7 @@ copyright: see below
 //     be made automatically.
 //
 //         define command-line <my-parser> ()
-//           option verbose?, long: "verbose", short: "v";
+//           option verbose?, names: #("verbose", "v");
 //         end;
 //
 //     Notes:
@@ -89,7 +80,9 @@ copyright: see below
 //       - For the options, default values are possible:
 //           option logfile = "default.log",
 //             kind: <parameter-option>,
-//             long: "logfile", short: "L";
+//             names: #("logfile", "L");
+//
+//       - If you omit ``names:'', the default name is the option name.
 //
 //       - You may want to specify types for an option:
 //           option logfile :: false-or(<string>), ...
@@ -102,8 +95,11 @@ copyright: see below
 //
 //       - Remaining keywords are handed as initargs to make.
 //
-//       - Besides ``option'' there is also ``positional-options'':
+//       - Besides ``option'' there is also ``positional-options'' and
+//         ``synopsis'':
 //           positional-options file-names;
+//           synopsis "Usage: foo\n",
+//             description: "This program fooifies.\n";
 //
 //
 // Parsing the Command Line
@@ -117,7 +113,7 @@ copyright: see below
 //
 //         define method main (appname, #rest args);
 //           let parser = make(<my-parser>);
-//           parse-options(parser, args);
+//           parse-command-line(parser, args);
 //
 //           // Here we go.
 //         end method main;
@@ -130,12 +126,12 @@ copyright: see below
 //     if they were real slots:
 //
 //         define command-line <my-parser> ()
-//           option verbose?, short: "v";
+//           option verbose?, names: #("v");
 //         end command-line;
 //
 //         define method main (appname, #rest args);
 //           let parser = make(<my-parser>);
-//           parse-options(parser, args);
+//           parse-command-line(parser, args);
 //
 //           if (parser.verbose?)
 //             ...
@@ -154,20 +150,22 @@ copyright: see below
 //    Suppose you say
 //
 //         define command-line <main-parser> ()
-//           synopsis print-synopsis,
-//             usage: "test [options] file...",
+//           synopsis "test [options] file...",
 //             description: "Stupid test program doing nothing with the args.";
-//           option verbose?, "", "Explanation", short: "v", long: "verbose";
-//           option other, "", "foo", long: "other-option";
+//           option verbose?, names: #("v", "verbose"),
+//             help: "Explanation";
+//           option other, names: #("other-option"),
+//             help: "foo";
+//           option version, help: "Show version";
 //         end command-line;
 //
 //    Then print-synopsis(parser, stream) will print something like:
 //
 //         Usage: test [options] file...
 //         Stupid test program doing nothing with the args.
-//
 //           -v, --verbose                Explanation
 //               --other-option           foo
+//               --version                Show version
 //
 
 
@@ -180,11 +178,13 @@ copyright: see below
 //  - Transform human-readable `?options' into patterns of the form
 //      [option-name, type, [default-if-any], #rest initargs]
 //      [positional-options-name]
-//      (synopsis-fn-name, usage, description)
+//      (usage, description)
 //
 //  - Hand it over to `defcmdline-rec'.
 //
-// Explanation: I have no idea what that is for.
+// Explanation: This macro defines the visible syntax of the various clauses
+// and converts each into the internal syntax described just above for
+// processing by defcmdline-rec.
 //
 define macro command-line-definer
     { define command-line ?:name () ?options end }
@@ -197,26 +197,16 @@ define macro command-line-definer
     { } => { }
 
   options:
-    { option ?:name :: ?value-type:expression, ?initargs:*; ... }
+    { option ?:name :: ?value-type:expression, #rest ?initargs:*; ... }
       => { [?name, ?value-type, [], ?initargs] ... }
     { option ?:name :: ?value-type:expression = ?default:expression,
-        ?initargs:*; ... }
+        #rest ?initargs:*; ... }
       => { [?name, ?value-type, [?default], ?initargs] ... }
     { positional-options ?:name; ... }
       => { [?name] ... }
-    { synopsis ?fn:name, #rest ?keys:*,
-      #key ?usage:expression = #f, ?description:expression = #f,
-      #all-keys; ... }
-      => { (?fn, ?usage, ?description) ... }
+    { synopsis ?usage:expression, #key ?description:expression = #f; ... }
+      => { (?usage, ?description) ... }
     { } => { }
-
-  initargs:
-    { ?syntax:expression, ?docstring:expression, #rest ?realargs:* }
-      => { [?syntax, ?docstring], ?realargs }
-    { ?docstring:expression, #rest ?realargs:* }
-      => { ["", ?docstring], ?realargs }
-    { #rest ?realargs:* }
-      => { ["", ""], ?realargs }
 end macro;
 
 // Macro DEFCMDLINE-REC--internal
@@ -224,14 +214,19 @@ end macro;
 // Syntax: defcmdline-rec ?:name (?supers:*) (?processed:*) ?options end
 //
 //   - Start out without `?processed' forms.
-//   - (Recursively) take each `?options' form and add a pair
-//       [?name, ?option]
-//     to `?processed'.
+//   - (Recursively) take each `?options' form and add it to ?processed,
+//     prepending it with the parser class name in the case of "option"
+//     or "positional-options" clauses. The resulting `?processed' form
+//     is a sequence of the following forms:
+//       (usage, description)
+//       [class-name, option-name, value-type, [default], initargs]
+//       [class-name, positional-options-name]
 //   - Finally, pass the `?processed' forms to `defcmdline-aux'.
 //
-// Explanation: The options will be processed by auxiliary rules.
-// However, these need the `?name', which would be available to main
-// rules only.  That's why we need the name/option pairs.
+// Explanation: The options will be processed by auxiliary rules
+// managed by ``defcmdline-aux''.  However, these rules need the class
+// name ``?name'', which would be available to main rules only.  This
+// macro makes the name accessible to the auxiliary rules.
 //
 define macro defcmdline-rec
     { defcmdline-rec ?:name (?supers:*) (?processed:*) end }
@@ -280,30 +275,27 @@ define macro defcmdline-class
 
   slots:
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
-       [?docstrings:*], #rest ?initargs:*,
+       #rest ?initargs:*,
        #key ?kind:expression = <flag-option>,
-            ?short:expression = #(),
-            ?long:expression = #(),
+            ?names:expression = #f,
        #all-keys] ... }
       => { constant slot ?option ## "-parser"
              = begin
-                 let long = ?long;
-                 let short = ?short;
+                 let names = ?names;
                  make(?kind,
-                      long-names: select (long by instance?)
-                                    <list> => long;
-                                    otherwise => list(long);
-                                  end select,
-                      short-names: select (short by instance?)
-                                     <list> => short;
-                                     otherwise => list(short);
-                                   end select,
+                      names: names | #( ?"option" ),
+                      ?default,
                       ?initargs);
                end; ... }
     { [?class:name, ?positional-options:name] ... }
       => {  ... }
     { (?usage:*) ... }
       => { ... }
+    { } => { }
+    
+  default:
+    { ?:expression }
+      => { default: ?expression }
     { } => { }
 end macro;
 
@@ -318,7 +310,7 @@ define macro defcmdline-init
 
   adders:
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
-       [?docstrings:*], ?initargs:*] ... }
+       ?initargs:*] ... }
       => { add-option(instance, ?option ## "-parser" (instance)); ... }
     { [?class:name, ?positional-options:name] ... }
       => {  ... }
@@ -333,22 +325,11 @@ define macro defcmdline-accessors
 
   accessors:
     { [?class:name, ?option:name, ?value-type:expression,
-       [], [?docstrings:*], ?initargs:*] ... }
+       [?default:*], ?initargs:*] ... }
       => { define method ?option (arglistparser :: ?class)
             => (value :: ?value-type);
              let optionparser = ?option ## "-parser" (arglistparser);
              option-value(optionparser);
-           end method ?option; ... }
-    { [?class:name, ?option:name, ?value-type:expression,
-       [?default:expression], [?docstrings:*], ?initargs:*] ... }
-      => { define method ?option (arglistparser :: ?class)
-            => (value :: ?value-type);
-             let optionparser = ?option ## "-parser" (arglistparser);
-             if (option-present?(optionparser))
-               option-value(optionparser);
-             else
-               ?default;
-             end if;
            end method ?option; ... }
     { [?class:name, ?positional-options:name] ... }
       => { define method ?positional-options (arglistparser :: ?class)
@@ -360,66 +341,19 @@ define macro defcmdline-accessors
     { } => { }
 end macro;
 
-// TODO(cgay): wtf?  This duplicates print-synopsis and is now completely obsolete.
 define macro defcmdline-synopsis
-    { defcmdline-synopsis ?:name
-       (?fn:name, ?usage:expression, ?description:expression)
-       ?options
+    { defcmdline-synopsis ?:name (?usage:expression, ?description:expression)
+        ?options:*
       end }
-      => { define method ?fn (parser :: ?name, stream :: <stream>, #key) => ();
-             let usage = ?usage;
-             let desc = ?description;
-             if (usage) format(stream, "Usage: %s\n", usage); end if;
-             if (desc) format(stream, "%s\n", desc); end if;
-             if (usage | desc) new-line(stream); end if;
-             local method print-option(short, long, syntax, description);
-                     let short = select (short by instance?)
-                                   <list> => first(short);
-                                   <string> => short;
-                                   otherwise => #f;
-                                 end select;
-                     let long = select (long by instance?)
-                                  <pair> => first(long);
-                                  <string> => long;
-                                  otherwise => #f;
-                                end select;
-                     write(stream, "  ");
-                     if (short)
-                       format(stream, "-%s", short);
-                       if (long)
-                         write(stream, ", ");
-                       else
-                         write(stream, "  ");
-                       end if;
-                     else
-                       write(stream, "    ");
-                     end if;
-                     if (long)
-                       format(stream, "--%s%s", long, syntax);
-                       for (i from 1 to (28 - 2 - size(long) - size(syntax)))
-                         write-element(stream, ' ');
-                       end for;
-                     else
-                       format(stream, "%28s", "");
-                     end if;
-                     write(stream, description);
-                     new-line(stream);
-                   end method print-option;
-             ?options
-           end method ?fn; }
+      => { define method print-synopsis (parser :: ?name, stream :: <stream>,
+                                         #next next-method,
+                                         #key usage, description)
+            => ();
+             let usage = usage | ?usage;
+             let desc = description | ?description;
+             next-method(parser, stream, usage: usage, description: desc)
+           end method }
 
-    { defcmdline-synopsis ?:name ?ignore:* end }
+    { defcmdline-synopsis ?:name ?options:* end }
       => { }
-
-  options:
-    { [?class:name, ?option:name, ?value-type:expression,
-       [?default:*], [?syntax:expression, ?description:expression],
-       #rest ?initargs:*,
-       #key ?short:expression = #f,
-            ?long:expression = #f,
-       #all-keys] ... }
-      => { print-option(?short, ?long, ?syntax, ?description); ... }
-    { [?class:name, ?positional-options:name] ... }
-      => { ... }
-    { } => { }
 end macro;
