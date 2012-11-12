@@ -283,7 +283,7 @@ define macro defcmdline-class
              = begin
                  let names = ?names;
                  make(?kind,
-                      names: if (names == #f) #( ?"option" ) else names end,
+                      names: names | #( ?"option" ),
                       ?default,
                       ?initargs);
                end; ... }

@@ -278,7 +278,5 @@ define test test-defcmdline ()
 end test test-defcmdline;
 
 // Prevent warnings for unused defs.
-begin
-  log-filename;
-  other;
-end;
+ignore(log-filename);
+ignore(other);
