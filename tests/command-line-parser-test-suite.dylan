@@ -255,21 +255,15 @@ define test test-choice-option ()
 end;
 
 define command-line <defcmdline-test-parser> ()
-  synopsis print-defcmdline-test-synopsis,
-    usage: "test [options] file...",
-    help: "Stupid test program doing nothing with the args.";
-  option verbose?,
-    "", "Explanation",
-    short: "v",
-    long: "verbose";
-  option other,
-    "", "foo",
-    long: "other-option";
-  option log-filename,
-    "", "Log file pathname",
-    kind: <parameter-option>,
-    long: "log",
-    short: "l";
+  synopsis "test [options] file...",
+    description: "Stupid test program doing nothing with the args.";
+  option verbose?, names: #("v", "verbose"),
+    help: "Explanation";
+  option other, names: #("other-option"),
+    help: "foo";
+  option log-filename, names: #("log", "l"),
+    help: "Log file pathname",
+    kind: <parameter-option>;
   positional-options file-names;
 end command-line;
 
@@ -286,6 +280,5 @@ end test test-defcmdline;
 // Prevent warnings for unused defs.
 begin
   log-filename;
-  print-defcmdline-test-synopsis;
   other;
 end;
