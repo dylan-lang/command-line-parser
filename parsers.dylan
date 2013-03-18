@@ -46,6 +46,7 @@ copyright: see below
 //    -q, -v, --quiet, --verbose
 
 define open primary class <flag-option> (<option>)
+  inherited slot option-might-have-parameters? = #f;
   constant slot negative-names :: <sequence> = #(),
     init-keyword: negative-names:;
   keyword type:, init-value: <boolean>;
@@ -123,7 +124,15 @@ end;
 //    -wall, -w=all, -w = all, --warnings all, --warnings=all
 
 define class <repeated-parameter-option> (<option>)
+  inherited slot option-value-is-collection? = #t;
 end class <repeated-parameter-option>;
+
+define method initialize
+    (option :: <repeated-parameter-option>, #key)
+ => ()
+  option.option-value-is-collection? := #t;
+  next-method();
+end method;
 
 define method reset-option
     (option :: <repeated-parameter-option>) => ()

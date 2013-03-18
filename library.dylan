@@ -61,6 +61,7 @@ define module option-parser-protocol
       option-help,
       option-default,
       option-might-have-parameters?, option-might-have-parameters?-setter,
+      option-value-is-collection?, option-value-is-collection?-setter,
       option-value, option-value-setter,
       option-variable,
     reset-option,

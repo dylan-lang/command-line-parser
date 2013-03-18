@@ -283,7 +283,8 @@ define macro defcmdline-class
              = begin
                  let names = ?names;
                  make(?kind,
-                      names: names | #( ?"option" ),
+                      names: if (names == #f) #( ?"option" ) else names end,
+                      type: ?value-type,
                       ?default,
                       ?initargs);
                end; ... }
@@ -326,8 +327,9 @@ define macro defcmdline-accessors
   accessors:
     { [?class:name, ?option:name, ?value-type:expression,
        [?default:*], ?initargs:*] ... }
-      => { define method ?option (arglistparser :: ?class)
-            => (value :: ?value-type);
+      => { // Value may differ from ?value-type for <repeated-parameter-option>
+           define method ?option (arglistparser :: ?class)
+            => (value);
              let optionparser = ?option ## "-parser" (arglistparser);
              option-value(optionparser);
            end method ?option; ... }

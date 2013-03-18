@@ -272,6 +272,7 @@ define abstract open primary class <option> (<object>)
   constant slot option-type :: <type> = <object>,
     init-keyword: type:;
   slot option-might-have-parameters? :: <boolean> = #t;
+  slot option-value-is-collection? :: <boolean> = #f;
   constant slot %option-help :: <string> = "",
     init-keyword: help:;
   // This shows up in the generated synopsis after the option name.
@@ -293,9 +294,14 @@ define method initialize
   next-method();
   let default = option.option-default;
   let type = option.option-type;
-  if (default & ~instance?(default, type))
-    parser-error("The default value (%=) for option %s is not of the correct "
-                   "type (%s).", default, option.option-names, type);
+  if (default)
+    if (option.option-value-is-collection?)
+      type := <collection>
+    end;
+    if (~instance?(default, type))
+      parser-error("The default value (%=) for option %s is not of the correct "
+                     "type (%s).", default, option.option-names, type);
+    end;
   end;
 end method initialize;
 
