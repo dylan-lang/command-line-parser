@@ -129,7 +129,11 @@ end class <repeated-parameter-option>;
 define method reset-option
     (option :: <repeated-parameter-option>) => ()
   next-method();
-  option.option-value := as(<dequeue>, option.option-default);
+  if (option.option-default)
+    option.option-value := as(<deque>, option.option-default);
+  else
+    option.option-value := make(<deque> /*, of: <string> */);
+  end;
 end;
 
 define method parse-option
