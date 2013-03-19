@@ -56,7 +56,6 @@ define method initialize
     (option :: <flag-option>, #key)
  => ()
   next-method();
-  option.option-might-have-parameters? := #f;
   // We keep our own local list of option names because we support two
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
@@ -127,17 +126,10 @@ define class <repeated-parameter-option> (<option>)
   inherited slot option-value-is-collection? = #t;
 end class <repeated-parameter-option>;
 
-define method initialize
-    (option :: <repeated-parameter-option>, #key)
- => ()
-  option.option-value-is-collection? := #t;
-  next-method();
-end method;
-
 define method reset-option
     (option :: <repeated-parameter-option>) => ()
   next-method();
-  option.option-value := make(<deque> /* of: <string> */);
+  option.option-value := as(<dequeue>, option.option-default);
 end;
 
 define method parse-option
