@@ -203,6 +203,9 @@ define test test-option-type ()
           add-option(parser, make(<parameter-option>,
                                   names: #("string"),
                                   type: <string>)); // uses default case, no conversion
+          add-option(parser, make(<repeated-parameter-option>,
+                                  names: #("repeated-integer"),
+                                  type: <integer>));
           parser
         end method make-parser;
   let items = list(list("integer", "123", 123, <integer>),
@@ -221,6 +224,13 @@ define test test-option-type ()
     parse-command-line(parser, list(concatenate("--", name), param));
     check-equal(name, expected-value, get-option-value(parser, name));
   end;
+  begin
+    let name = "repeated-integer";
+    let option = concatenate("--", name);
+    let parser = make-parser();
+    parse-command-line(parser, vector(option, "1", option, "2", option, "3"));
+    check-equal(name, #[1, 2, 3], get-option-value(parser, name));
+  end;
 end test test-option-type;
 
 define test test-option-default ()
@@ -232,9 +242,19 @@ define test test-option-default ()
                                           default: "string")));
   check-no-condition("good default",
                      add-option(parser, make(<parameter-option>,
-                                             names: #("foo"),
+                                             names: #("bar"),
                                              type: <integer>,
                                              default: 1234)));
+  check-condition("bad default for repeated option", <command-line-parser-error>,
+                  add-option(parser, make(<repeated-parameter-option>,
+                                          names: #("baz"),
+                                          type: <integer>,
+                                          default: 1234)));
+  check-no-condition("good default for repeated option",
+                     add-option(parser, make(<repeated-parameter-option>,
+                                             names: #("fez"),
+                                             type: <integer>,
+                                             default: #[1, 2, 3, 4])));
 end test test-option-default;
 
 

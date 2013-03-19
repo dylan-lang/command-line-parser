@@ -46,6 +46,7 @@ copyright: see below
 //    -q, -v, --quiet, --verbose
 
 define open primary class <flag-option> (<option>)
+  inherited slot option-might-have-parameters? = #f;
   constant slot negative-names :: <sequence> = #(),
     init-keyword: negative-names:;
   keyword type:, init-value: <boolean>;
@@ -55,7 +56,6 @@ define method initialize
     (option :: <flag-option>, #key)
  => ()
   next-method();
-  option.option-might-have-parameters? := #f;
   // We keep our own local list of option names because we support two
   // different types--positive and negative. So we need to explain about
   // our extra options to parse-options by adding them to the standard
@@ -123,12 +123,17 @@ end;
 //    -wall, -w=all, -w = all, --warnings all, --warnings=all
 
 define class <repeated-parameter-option> (<option>)
+  inherited slot option-value-is-collection? = #t;
 end class <repeated-parameter-option>;
 
 define method reset-option
     (option :: <repeated-parameter-option>) => ()
   next-method();
-  option.option-value := make(<deque> /* of: <string> */);
+  if (option.option-default)
+    option.option-value := as(<deque>, option.option-default);
+  else
+    option.option-value := make(<deque> /*, of: <string> */);
+  end;
 end;
 
 define method parse-option
