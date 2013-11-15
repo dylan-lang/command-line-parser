@@ -74,9 +74,6 @@ copyright: see below
 // TODO(cgay): Add a required: (or required?: ?) init keyword that
 // makes non-positional args required else an error is generated.
 
-// TODO(cgay): Add support for specifying the min/max number of
-// positional args when instantiating the parser.
-
 // TODO(cgay): This error sucks: "<unknown-option>" is not present as
 // a key for {<string-table>: size 12}.  How about "<unknown-option>
 // is not a recognized command-line option."  See next item.
@@ -157,9 +154,12 @@ define open class <command-line-parser> (<object>)
   constant slot tokens :: <deque> /* of: <token> */ =
     make(<deque> /* of: <token> */);
 
-  // TODO(cgay): Rename to positional-arguments
   slot positional-options :: <stretchy-vector> /* of <string> */
     = make(<stretchy-vector>);
+  constant slot min-positional-options :: <integer> = 0,
+    init-keyword: min-positional-options:;
+  constant slot max-positional-options :: <integer> = $maximum-integer,
+    init-keyword: max-positional-options:;
 
   // Whether to automatically handle --help for the client.
   constant slot provide-help-option? :: <boolean> = #t,
@@ -669,7 +669,8 @@ define method parse-command-line
 end method parse-command-line;
 
 define function %parse-command-line
-    (parser :: <command-line-parser>, argv :: <sequence>) => ()
+    (parser :: <command-line-parser>, argv :: <sequence>)
+ => ()
   // Split our args around '--' and chop them around '='.
   let (clean-args, extra-args) = split-args(argv);
   let chopped-args = chop-args(clean-args);
@@ -709,6 +710,20 @@ define function %parse-command-line
   for (arg in extra-args)
     parser.positional-options := add!(parser.positional-options, arg);
   end for;
+  let nargs = parser.positional-options.size;
+  let min-args = parser.min-positional-options;
+  let max-args = parser.max-positional-options;
+  if (min-args = max-args & nargs ~= min-args)
+    usage-error("Exactly %d positional option%s required.",
+                min-args,
+                if (nargs = 1) "" else "s are" end);
+  end;
+  if (nargs < min-args)
+    usage-error("Not enough positional options supplied.");
+  end;
+  if (nargs > max-args)
+    usage-error("Too many positional options supplied.");
+  end;
 end function %parse-command-line;
 
 define open generic print-synopsis

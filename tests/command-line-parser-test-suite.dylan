@@ -40,6 +40,8 @@ synopsis: Test suite for the command-line-parser  library.
 
 // Now in it's own github repo.  cgay ~2011
 
+// TODO(cgay): Suppress output to stderr from usage errors in tests.
+
 define suite command-line-parser-test-suite
   (/* setup-function: foo, cleanup-function: bar */)
   test test-command-line-parser;
@@ -51,6 +53,7 @@ define suite command-line-parser-test-suite
   test test-option-default;
   test test-choice-option;
   test test-defcmdline;
+  test test-min-max-positional-options;
 end suite;
 
 
@@ -300,3 +303,13 @@ end test test-defcmdline;
 // Prevent warnings for unused defs.
 ignore(log-filename);
 ignore(other);
+
+define test test-min-max-positional-options ()
+  let parser = make(<command-line-parser>,
+                    min-positional-options: 1,
+                    max-positional-options: 2);
+  assert-signals(<usage-error>, parse-command-line(parser, #[]), "xyz");
+  assert-no-errors(parse-command-line(parser, #["a"]), "abc");
+  assert-no-errors(parse-command-line(parser, #["a", "b"]), "xxx");
+  assert-signals(<usage-error>, parse-command-line(parser, #["a", "b", "c"]), "yyy");
+end test test-min-max-positional-options;

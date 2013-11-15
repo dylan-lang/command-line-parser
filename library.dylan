@@ -55,7 +55,6 @@ define module option-parser-protocol
       add-percent-substitution,
 
     // <option>
-    <option>,
       option-present?,
       option-names, long-names, short-names,
       option-help,
@@ -101,6 +100,7 @@ define module command-line-parser
     // be used relatively frequently for user types.
     parse-option-parameter,
 
+    <option>,
     <flag-option>,
     <parameter-option>,
     <repeated-parameter-option>,
