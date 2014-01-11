@@ -42,20 +42,6 @@ synopsis: Test suite for the command-line-parser  library.
 
 // TODO(cgay): Suppress output to stderr from usage errors in tests.
 
-define suite command-line-parser-test-suite
-  (/* setup-function: foo, cleanup-function: bar */)
-  test test-command-line-parser;
-  test test-synopsis-format;
-  test test-help-substitutions;
-  test test-usage;
-  test test-duplicate-name-error;
-  test test-option-type;
-  test test-option-default;
-  test test-choice-option;
-  test test-defcmdline;
-  test test-min-max-positional-options;
-end suite;
-
 
 // Create a parser for our standard test argument list, parse the given
 // argument list, return the parser.
@@ -313,3 +299,17 @@ define test test-min-max-positional-options ()
   assert-no-errors(parse-command-line(parser, #["a", "b"]), "xxx");
   assert-signals(<usage-error>, parse-command-line(parser, #["a", "b", "c"]), "yyy");
 end test test-min-max-positional-options;
+
+define suite command-line-parser-test-suite
+  (/* setup-function: foo, cleanup-function: bar */)
+  test test-command-line-parser;
+  test test-synopsis-format;
+  test test-help-substitutions;
+  test test-usage;
+  test test-duplicate-name-error;
+  test test-option-type;
+  test test-option-default;
+  test test-choice-option;
+  test test-defcmdline;
+  test test-min-max-positional-options;
+end suite;
