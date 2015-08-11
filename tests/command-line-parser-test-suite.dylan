@@ -269,6 +269,7 @@ define test test-min-max-positional-options ()
   assert-no-errors(parse-command-line(parser, #["a"]), "abc");
   assert-no-errors(parse-command-line(parser, #["a", "b"]), "xxx");
   assert-signals(<usage-error>, parse-command-line(parser, #["a", "b", "c"]), "yyy");
+  assert-signals(<help-requested>, parse-command-line(parser, #["-h"]));
 end test test-min-max-positional-options;
 
 define suite command-line-parser-test-suite
