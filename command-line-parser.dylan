@@ -614,9 +614,9 @@ define method parse-command-line
     add-option(parser, parser.help-option);
   end;
   block ()
-    %parse-command-line(parser, argv);
+    %parse-command-line(parser, argv, usage, description);
   exception (ex :: <usage-error>)
-    if (do-help?)
+    if (do-help? & ~instance?(ex, <help-requested>))
       format(*standard-error*,
              "Error: %s\nUse %s to see command-line options.\n",
              ex,
@@ -631,15 +631,11 @@ define method parse-command-line
     end;
     signal(ex)
   end;
-  if (do-help? & parser.help-option.option-value)
-    print-synopsis(parser, *standard-output*,
-                   usage: usage, description: description);
-    error(make(<help-requested>));
-  end;
 end method parse-command-line;
 
 define function %parse-command-line
-    (parser :: <command-line-parser>, argv :: <sequence>)
+    (parser :: <command-line-parser>, argv :: <sequence>,
+     usage :: false-or(<string>), description :: false-or(<string>))
  => ()
   // Split our args around '--' and chop them around '='.
   let (clean-args, extra-args) = split-args(argv);
@@ -675,6 +671,13 @@ define function %parse-command-line
         parser-error("Unrecognized token type: %=", token);
     end select;
   end while;
+
+  // Handle help prior to validating positional options.
+  if (parser.provide-help-option? & parser.help-option.option-value)
+    print-synopsis(parser, *standard-output*,
+                   usage: usage, description: description);
+    error(make(<help-requested>));
+  end;
 
   // And append any more positional options from after the '--'.
   for (arg in extra-args)
