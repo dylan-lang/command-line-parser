@@ -1,2 +1,3 @@
-The documentation for this module is in the "opendylan" repository so
-that it can be integrated into the library reference docs.
+The documentation for this module is in the Open Dylan library
+reference documentation:
+https://opendylan.org/documentation/library-reference/command-line-parser/index.html
