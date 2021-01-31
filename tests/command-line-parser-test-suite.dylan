@@ -75,6 +75,31 @@ define test test-command-line-parser ()
              empty?(parser.positional-options));
 end test test-command-line-parser;
 
+define test test-<parameter-option> ()
+  local
+    method parse (argv)
+      let p = make(<command-line-parser>);
+      add-option(p, make(<parameter-option>, names: #("airport", "a")));
+      parse-command-line(p, argv);
+      p
+    end;
+  // I've never seen any command line parser handle '=' with spaces around it.
+  // Or maybe they do and I've just never seen it used? Should we even support
+  // that? --cgay
+  for (argv in list(vector("--airport", "BOS"),
+                    vector("--airport=BOS"),
+                    vector("--airport", "=", "BOS"),
+                    vector("-aBOS"),
+                    vector("-a=BOS"),
+                    vector("-a", "=", "BOS")))
+    let parser = parse(argv);
+    assert-equal("BOS", get-option-value(parser, "airport"),
+                 format-to-string("argv = %=", argv));
+    assert-equal("BOS", get-option-value(parser, "a"),
+                 format-to-string("argv = %=", argv));
+  end;
+end test;
+
 // This test is pretty brittle.  Would be good to make it ignore
 // whitespace to some extent.
 define test test-synopsis-format ()
