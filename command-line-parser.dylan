@@ -29,11 +29,6 @@ copyright: See LICENSE file in this distribution.
 //  All the tokens on that command line are arguments. "-x" and "--y"
 //  are options, and "bar" is a parameter. "baz" is a positional argument.
 
-// todo -- There is no error signalled if two options have the same short name
-//         (or long name, I assume).  In fact there's a comment saying that the
-//         rightmost argument with the same name takes precedence.  So this is
-//         by design???
-//
 // todo -- There is no indication of default values in the generated synopsis,
 //         and the syntax for specifying "syntax" and docstring is bizarre at
 //         best.  --cgay 2006.11.27
@@ -47,9 +42,6 @@ copyright: See LICENSE file in this distribution.
 // TODO(cgay): This error sucks: "<unknown-option>" is not present as
 // a key for {<string-table>: size 12}.  How about "<unknown-option>
 // is not a recognized command-line option."  See next item.
-
-// TODO(cgay): Export usage-error and <usage-error> after fixing them
-// up.  These are duplicated in testworks, so use them there.
 
 // TODO(cgay): With an option that has negative options (e.g.,
 // --verbose and --quiet in the same option) just show the positive
