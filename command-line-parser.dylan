@@ -117,9 +117,6 @@ define open class <command-line-parser> (<object>)
     make(<string-table>);
   constant slot option-long-name-map :: <string-table> /* of <option> */ =
     make(<string-table>);
-  // name => might-have-parameters?
-  constant slot parameter-options :: <string-table> /* of <boolean> */ =
-    make(<string-table>);
 
   constant slot tokens :: <deque> /* of: <token> */ =
     make(<deque> /* of: <token> */);
@@ -169,11 +166,6 @@ define function add-option
   add-to-table(parser.option-short-name-map,
                option.short-names,
                option);
-  if (option.option-might-have-parameters?)
-    add-to-table(parser.parameter-options,
-                 option.short-names,
-                 #t);
-  end if;
   parser.option-parsers := add!(parser.option-parsers, option);
 end function add-option;
 
