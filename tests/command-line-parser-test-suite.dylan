@@ -41,18 +41,19 @@ end function make-parser;
 
 define function parse (#rest argv)
   let parser = make-parser();
-  values(parser, parse-command-line(parser, argv))
-end;
+  parse-command-line(parser, argv);
+  parser
+end function;
 
 define test test-command-line-parser ()
   check-condition("blah", <usage-error>, parse("--bad-option-no-donut"));
 
   // A correct parse with all arguments specified in long format.
-  let (parser, parse-result) = parse("--verbose", "--foo",
-                                     "--quux", "quux-value",
-                                     "--optimize=optimize-value",
-                                     "--warning", "warning-value",
-                                     "--define", "key", "=", "value");
+  let parser = parse("--verbose", "--foo",
+                     "--quux", "quux-value",
+                     "--optimize=optimize-value",
+                     "--warning", "warning-value",
+                     "--define", "key", "=", "value");
   check-equal("verbose is true",
               get-option-value(parser, "verbose"),
               #t);
