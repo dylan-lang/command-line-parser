@@ -144,6 +144,7 @@ end class <command-line-parser>;
 define open generic reset-parser
     (parser :: <command-line-parser>) => ();
 
+// Why? Why not just make a new one?
 define method reset-parser
     (parser :: <command-line-parser>) => ()
   parser.tokens.size := 0;
@@ -236,7 +237,8 @@ end;
 //======================================================================
 
 define abstract open primary class <option> (<object>)
-  // Information supplied by creator.
+  // Information supplied by creator. Note that the first element is used
+  // by canonical-option-name to generate a usage message.
   slot option-names :: <sequence> = #(),
     required-init-keyword: names:;
   constant slot option-type :: <type> = <object>,
@@ -493,7 +495,7 @@ define function split-args(argv)
   if (splitter)
     let clean-args = copy-sequence(argv, end: splitter);
     let extra-args = copy-sequence(argv, start: splitter + 1);
-    values (clean-args, extra-args);
+    values(clean-args, extra-args);
   else
     values(argv, #());
   end if;
@@ -535,8 +537,7 @@ end function chop-args;
 
 // Turn a deque of args into an internal deque of tokens.
 define function tokenize-args
-    (parser :: <command-line-parser>,
-     args :: <deque> /* of: <string> */)
+    (parser :: <command-line-parser>, args :: <deque> /* of: <string> */)
  => ()
   until (args.empty?)
     let arg = pop(args);
@@ -563,10 +564,10 @@ define function tokenize-args
         token(<equals-token>, "=");
         token(<positional-option-token>, next-arg());
 
-      (arg.size > 2 & arg[0] = '-' & arg[1] = '-') =>
+      starts-with?(arg, "--") =>
         token(<long-option-token>, copy-sequence(arg, start: 2));
 
-      (arg.size > 0 & arg[0] = '-') =>
+      starts-with?(arg, "-") =>
         if (arg.size = 1)
           // Probably a fake filename representing stdin ('cat -')
           token(<positional-option-token>, "-");
@@ -667,7 +668,6 @@ define function %parse-command-line
         parse-option(option, parser);
         option.option-present? := #t;
       otherwise =>
-        // TODO(cgay): log.error("Unrecognized token: %=", token);
         parser-error("Unrecognized token type: %=", token);
     end select;
   end while;
@@ -705,9 +705,8 @@ define open generic print-synopsis
  => ();
 
 // TODO(cgay): Show all option names, not just the first.
-// TODO(cgay): Annotate the repeatable options with "[*]"
-// and add "[*] these options may be used multiple times"
-// at the bottom, if any.
+// TODO(cgay): Annotate the repeatable options with "..."
+// TODO(cgay): Wrap the descriptions nicely
 //
 // Example output:
 // Usage: foo [options] arg1 ...

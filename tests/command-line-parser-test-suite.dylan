@@ -2,15 +2,6 @@ module: command-line-parser-test-suite
 synopsis: Test suite for the command-line-parser  library.
 copyright: See LICENSE file in this distribution.
 
-// Modified by Carl Gay to use the testworks library and to test
-// defcmdline.  Moved from src/tests to libraries/getopt/tests.
-// 2006.11.29
-
-// Now in libraries/utilities/command-line-parser/tests
-// Hannes Mehnert 2007.02.23
-
-// Now in it's own github repo.  cgay ~2011
-
 // TODO(cgay): Suppress output to stderr from usage errors in tests.
 
 
@@ -109,7 +100,7 @@ define test test-help-substitutions ()
                     default: #t,
                     help: "%%%default%%prog%");
   check-equal("", "%#t%prog%", option.option-help);
-end;  
+end;
 
 // Verify that the usage: and description: passed to parse-command-line
 // are displayed correctly.
