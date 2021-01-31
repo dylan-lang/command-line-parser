@@ -72,7 +72,7 @@ define test test-command-line-parser ()
   let defines = get-option-value(parser, "define");
   check-equal("key is defined as 'value'", defines["key"], "value");
   check-true("positional options are empty",
-             empty?(parser.positional-options));
+             empty?(parser.positional-arguments));
 end test test-command-line-parser;
 
 define test test-<parameter-option> ()
@@ -261,7 +261,7 @@ define command-line <defcmdline-test-parser> ()
   option log-filename, names: #("log", "l"),
     help: "Log file pathname",
     kind: <parameter-option>;
-  positional-options file-names;
+  positional-arguments file-names;
 end command-line;
 
 
@@ -278,13 +278,13 @@ end test test-defcmdline;
 ignore(log-filename);
 ignore(other);
 
-define test test-min-max-positional-options ()
+define test test-min-max-positional-arguments ()
   let parser = make(<command-line-parser>,
-                    min-positional-options: 1,
-                    max-positional-options: 2);
+                    min-positional-arguments: 1,
+                    max-positional-arguments: 2);
   assert-signals(<usage-error>, parse-command-line(parser, #[]), "xyz");
   assert-no-errors(parse-command-line(parser, #["a"]), "abc");
   assert-no-errors(parse-command-line(parser, #["a", "b"]), "xxx");
   assert-signals(<usage-error>, parse-command-line(parser, #["a", "b", "c"]), "yyy");
   assert-signals(<help-requested>, parse-command-line(parser, #["-h"]));
-end test test-min-max-positional-options;
+end test;

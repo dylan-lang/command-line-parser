@@ -60,7 +60,8 @@ define module command-line-parser
 
   export
     <command-line-parser>,
-    positional-options,
+    positional-options,         // deprecated. not options.
+    positional-arguments,
     add-option,
     parse-command-line,
     get-option-value,

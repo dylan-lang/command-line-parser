@@ -33,7 +33,7 @@ copyright: See LICENSE file in this distribution.
 //             (add-dylan-keyword 'dyl-parameterized-definition-words
 //                                "command-line")
 //             (add-dylan-keyword 'dyl-other-keywords "option")
-//             (add-dylan-keyword 'dyl-other-keywords "positional-options")
+//             (add-dylan-keyword 'dyl-other-keywords "positional-arguments")
 //             (add-dylan-keyword 'dyl-other-keywords "synopsis")))
 //
 //
@@ -76,9 +76,9 @@ copyright: See LICENSE file in this distribution.
 //
 //       - Remaining keywords are handed as initargs to make.
 //
-//       - Besides ``option'' there is also ``positional-options'' and
+//       - Besides ``option'' there is also ``positional-arguments'' and
 //         ``synopsis'':
-//           positional-options file-names;
+//           positional-arguments file-names;
 //           synopsis "Usage: foo\n",
 //             description: "This program fooifies.\n";
 //
@@ -160,7 +160,7 @@ copyright: See LICENSE file in this distribution.
 //
 //  - Transform human-readable `?options' into patterns of the form
 //      [option-name, type, [default-if-any], #rest initargs]
-//      [positional-options-name]
+//      [positional-arguments-name]
 //      (usage, description)
 //
 //  - Hand it over to `defcmdline-rec'.
@@ -185,7 +185,7 @@ define macro command-line-definer
     { option ?:name :: ?value-type:expression = ?default:expression,
         #rest ?initargs:*; ... }
       => { [?name, ?value-type, [?default], ?initargs] ... }
-    { positional-options ?:name; ... }
+    { positional-arguments ?:name; ... }
       => { [?name] ... }
     { synopsis ?usage:expression, #key ?description:expression = #f; ... }
       => { (?usage, ?description) ... }
@@ -199,11 +199,11 @@ end macro;
 //   - Start out without `?processed' forms.
 //   - (Recursively) take each `?options' form and add it to ?processed,
 //     prepending it with the parser class name in the case of "option"
-//     or "positional-options" clauses. The resulting `?processed' form
+//     or "positional-arguments" clauses. The resulting `?processed' form
 //     is a sequence of the following forms:
 //       (usage, description)
 //       [class-name, option-name, value-type, [default], initargs]
-//       [class-name, positional-options-name]
+//       [class-name, positional-arguments-name]
 //   - Finally, pass the `?processed' forms to `defcmdline-aux'.
 //
 // Explanation: The options will be processed by auxiliary rules
@@ -271,7 +271,7 @@ define macro defcmdline-class
                       ?default,
                       ?initargs);
                end; ... }
-    { [?class:name, ?positional-options:name] ... }
+    { [?class:name, ?positional-arguments:name] ... }
       => {  ... }
     { (?usage:*) ... }
       => { ... }
@@ -296,7 +296,7 @@ define macro defcmdline-init
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
        ?initargs:*] ... }
       => { add-option(instance, ?option ## "-parser" (instance)); ... }
-    { [?class:name, ?positional-options:name] ... }
+    { [?class:name, ?positional-arguments:name] ... }
       => {  ... }
     { (?usage:*) ... }
       => { ... }
@@ -316,10 +316,10 @@ define macro defcmdline-accessors
              let optionparser = ?option ## "-parser" (arglistparser);
              option-value(optionparser);
            end method ?option; ... }
-    { [?class:name, ?positional-options:name] ... }
-      => { define method ?positional-options (arglistparser :: ?class)
+    { [?class:name, ?positional-arguments:name] ... }
+      => { define method ?positional-arguments (arglistparser :: ?class)
             => (value :: <sequence>);
-             positional-options(arglistparser);
+             positional-arguments(arglistparser);
            end method; ... }
     { (?usage:*) ... }
       => { ... }

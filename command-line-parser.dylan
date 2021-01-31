@@ -109,12 +109,12 @@ define open class <command-line-parser> (<object>)
   constant slot tokens :: <deque> /* of: <token> */ =
     make(<deque> /* of: <token> */);
 
-  slot positional-options :: <stretchy-vector> /* of <string> */
+  slot positional-arguments :: <stretchy-vector> /* of <string> */
     = make(<stretchy-vector>);
-  constant slot min-positional-options :: <integer> = 0,
-    init-keyword: min-positional-options:;
-  constant slot max-positional-options :: <integer> = $maximum-integer,
-    init-keyword: max-positional-options:;
+  constant slot min-positional-arguments :: <integer> = 0,
+    init-keyword: min-positional-arguments:;
+  constant slot max-positional-arguments :: <integer> = $maximum-integer,
+    init-keyword: max-positional-arguments:;
 
   // Whether to automatically handle --help for the client.
   constant slot provide-help-option? :: <boolean> = #t,
@@ -126,6 +126,9 @@ define open class <command-line-parser> (<object>)
     init-keyword: help-option:;
 end class <command-line-parser>;
 
+// For temporary backward compatibility.
+define constant positional-options = positional-arguments;
+
 define open generic reset-parser
     (parser :: <command-line-parser>) => ();
 
@@ -133,7 +136,7 @@ define open generic reset-parser
 define method reset-parser
     (parser :: <command-line-parser>) => ()
   parser.tokens.size := 0;
-  parser.positional-options.size := 0;
+  parser.positional-arguments.size := 0;
   do(reset-option, parser.option-parsers);
 end;
 
@@ -620,13 +623,12 @@ define function %parse-command-line
   // Process our tokens.
   while (argument-tokens-remaining?(parser))
     let token = peek-argument-token(parser);
+    let value = token.token-value;
     select (token by instance?)
       <positional-option-token> =>
         get-argument-token(parser);
-        parser.positional-options := add!(parser.positional-options,
-                                          token.token-value);
+        parser.positional-arguments := add!(parser.positional-arguments, value);
       <short-option-token>, <long-option-token> =>
-        let value = token.token-value;
         let option = find-option(parser, value)
           | usage-error("Unrecognized option: %s%s",
                         if (value.size = 1) "-" else "--" end,
@@ -634,7 +636,7 @@ define function %parse-command-line
         parse-option(option, parser);
         option.option-present? := #t;
       otherwise =>
-        parser-error("Unexpected token: %=", token.token-value);
+        parser-error("Unexpected token: %=", value);
     end select;
   end while;
 
@@ -647,11 +649,11 @@ define function %parse-command-line
 
   // And append any more positional options from after the '--'.
   for (arg in extra-args)
-    parser.positional-options := add!(parser.positional-options, arg);
+    parser.positional-arguments := add!(parser.positional-arguments, arg);
   end for;
-  let nargs = parser.positional-options.size;
-  let min-args = parser.min-positional-options;
-  let max-args = parser.max-positional-options;
+  let nargs = parser.positional-arguments.size;
+  let min-args = parser.min-positional-arguments;
+  let max-args = parser.max-positional-arguments;
   if (min-args = max-args & nargs ~= min-args)
     usage-error("Exactly %d positional option%s required.",
                 min-args,
