@@ -7,8 +7,6 @@ define library command-line-parser-test-suite
   use strings;
   use system;
   use testworks;
-
-  export command-line-parser-test-suite;
 end library;
 
 define module command-line-parser-test-suite
@@ -21,6 +19,4 @@ define module command-line-parser-test-suite
   use strings;
   use testworks;
   use threads;
-
-  export command-line-parser-test-suite;
 end module;

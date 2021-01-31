@@ -271,17 +271,3 @@ define test test-min-max-positional-options ()
   assert-signals(<usage-error>, parse-command-line(parser, #["a", "b", "c"]), "yyy");
   assert-signals(<help-requested>, parse-command-line(parser, #["-h"]));
 end test test-min-max-positional-options;
-
-define suite command-line-parser-test-suite
-  (/* setup-function: foo, cleanup-function: bar */)
-  test test-command-line-parser;
-  test test-synopsis-format;
-  test test-help-substitutions;
-  test test-usage;
-  test test-duplicate-name-error;
-  test test-option-type;
-  test test-option-default;
-  test test-choice-option;
-  test test-defcmdline;
-  test test-min-max-positional-options;
-end suite;
