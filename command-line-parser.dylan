@@ -668,7 +668,7 @@ define function %parse-command-line
         parse-option(option, parser);
         option.option-present? := #t;
       otherwise =>
-        parser-error("Unrecognized token type: %=", token);
+        parser-error("Unexpected token: %=", token.token-value);
     end select;
   end while;
 
