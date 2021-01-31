@@ -149,9 +149,9 @@ end test;
 define test test-duplicate-name-error ()
   let parser = make(<command-line-parser>);
   add-option(parser, make(<flag-option>, names: #("x")));
-  check-condition("", <command-line-parser-error>,
-                  add-option(parser, make(<flag-option>, names: #("x"))));
-end;
+  assert-signals(<command-line-parser-error>,
+                 add-option(parser, make(<flag-option>, names: #("x"))));
+end test;
 
 define test test-option-type ()
   local method make-parser ()

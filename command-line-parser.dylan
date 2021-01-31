@@ -113,10 +113,6 @@ define open class <command-line-parser> (<object>)
   // Retained across calls to parse-command-line.
   slot option-parsers :: <stretchy-vector> /* of <option> */ =
     make(<stretchy-vector> /* of <option> */);
-  constant slot option-short-name-map :: <string-table> /* of <option> */ =
-    make(<string-table>);
-  constant slot option-long-name-map :: <string-table> /* of <option> */ =
-    make(<string-table>);
 
   constant slot tokens :: <deque> /* of: <token> */ =
     make(<deque> /* of: <token> */);
@@ -152,37 +148,30 @@ end;
 define function add-option
     (parser :: <command-line-parser>, option :: <option>)
  => ()
-  local method add-to-table(table, names, value) => ()
-          for (name in names)
-            if (element(table, name, default: #f))
-              parser-error("Duplicate option name: %=", name);
-            end;
-            table[name] := value;
-          end;
-        end;
-  add-to-table(parser.option-long-name-map,
-               option.long-names,
-               option);
-  add-to-table(parser.option-short-name-map,
-               option.short-names,
-               option);
+  for (name in option.option-names)
+    if (find-option(parser, name))
+      parser-error("duplicate option name: %=", name);
+    end;
+  end;
   parser.option-parsers := add!(parser.option-parsers, option);
 end function add-option;
 
 define method find-option
-    (parser :: <command-line-parser>, name :: <string>)
- => (option :: <option>)
-  element(parser.option-long-name-map, name, default: #f)
-    | element(parser.option-short-name-map, name, default: #f)
-    | parser-error("Option not found: %=", name)
-end;
-
-define function has-option?
-    (parser :: <command-line-parser>, name :: <string>)
- => (has? :: <boolean>)
-  (element(parser.option-long-name-map, name, default: #f)
-     | element(parser.option-short-name-map, name, default: #f)) & #t
-end;
+    (parser :: <command-line-parser>, name :: <string>,
+     #key error? :: <boolean>)
+ => (option :: false-or(<option>))
+  let options :: <sequence> = parser.option-parsers;
+  block (return)
+    for (option in parser.option-parsers)
+      for (opt-name in option.option-names)
+        if (opt-name = name)
+          return(option)
+        end;
+      end;
+    end;
+    error? & parser-error("Option not found: %=", name)
+  end block
+end method;
 
 define function get-option-value
     (parser :: <command-line-parser>, name :: <string>)
@@ -567,8 +556,7 @@ define function tokenize-args
           block (done)
             for (i from 1 below arg.size)
               let opt = make(<string>, size: 1, fill: arg[i]);
-              let opt-parser = element(parser.option-short-name-map,
-                                       opt, default: #f);
+              let opt-parser = find-option(parser, opt);
               if (opt-parser & opt-parser.option-might-have-parameters?
                     & i + 1 < arg.size)
                 // Take rest of argument, and use it as a parameter.
@@ -602,7 +590,7 @@ define method parse-command-line
  => ()
   reset-parser(parser);
   let do-help? = parser.provide-help-option?;
-  if (do-help? & ~any?(curry(has-option?, parser),
+  if (do-help? & ~any?(curry(find-option, parser),
                        parser.help-option.option-names))
     add-option(parser, parser.help-option);
   end;
@@ -645,18 +633,12 @@ define function %parse-command-line
         get-argument-token(parser);
         parser.positional-options := add!(parser.positional-options,
                                           token.token-value);
-      <short-option-token> =>
-        let option =
-          element(parser.option-short-name-map, token.token-value, default: #f)
-          // TODO(cgay): don't hard-code '-'
-          | usage-error("Unrecognized option: -%s", token.token-value);
-        parse-option(option, parser);
-        option.option-present? := #t;
-      <long-option-token> =>
-        let option =
-          element(parser.option-long-name-map, token.token-value, default: #f)
-          // TODO(cgay): don't hard-code '--'
-          | usage-error("Unrecognized option: --%s", token.token-value);
+      <short-option-token>, <long-option-token> =>
+        let value = token.token-value;
+        let option = find-option(parser, value)
+          | usage-error("Unrecognized option: %s%s",
+                        if (value.size = 1) "-" else "--" end,
+                        value);
         parse-option(option, parser);
         option.option-present? := #t;
       otherwise =>
