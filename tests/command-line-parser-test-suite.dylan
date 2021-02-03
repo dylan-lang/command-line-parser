@@ -75,6 +75,29 @@ define test test-command-line-parser ()
              empty?(parser.positional-arguments));
 end test test-command-line-parser;
 
+define test test-<flag-option> ()
+  local
+    method parse (default, argv)
+      let p = make(<command-line-parser>);
+      add-option(p, make(<flag-option>,
+                         names: #("verbose", "v"),
+                         negative-names: #("quiet", "q"),
+                         default: default));
+      parse-command-line(p, argv);
+      p
+    end;
+  assert-false(option-value(make(<flag-option>)), "boolean flag defaults to false?");
+  for (item in list(list(#f, #["--verbose"], #t),
+                    list(#t, #["--verbose"], #t),
+                    list(#f, #["-v"],        #t),
+                    list(#f, #["--quiet"],   #f),
+                    list(#t, #["--quiet"],   #f),
+                    list(#f, #["-q"],        #f)))
+    let (default, argv, want) = apply(values, item);
+    assert-equal(want, get-option-value(parse(default, argv), "verbose"), item);
+  end;
+end test;
+
 define test test-<parameter-option> ()
   local
     method parse (argv)
