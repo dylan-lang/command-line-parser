@@ -4,11 +4,13 @@ copyright: See LICENSE file in this distribution.
 
 // TODO(cgay): Suppress output to stderr from usage errors in tests.
 
+// #:str: syntax
+define function str-parser (s :: <string>) => (s :: <string>) s end;
 
 // Create a parser for our standard test argument list, parse the given
 // argument list, return the parser.
 define function make-parser ()
-  let parser = make(<command-line-parser>);
+  let parser = make(<command-line-parser>, help: "x");
   // Usage: progname [-qvfB] [-Q arg] [-O [arg]] [-W arg]* [-Dkey[=value]]*
   add-option(parser,
              make(<flag-option>,
@@ -29,13 +31,16 @@ define function make-parser ()
   add-option(parser,
              make(<optional-parameter-option>,
                   names: #("optimize", "O"),
+                  help: "x",
                   variable: "LEVEL"));
   add-option(parser,
              make(<repeated-parameter-option>,
-                  names: #("warning", "W")));
+                  names: #("warning", "W"),
+                  help: "x"));
   add-option(parser,
              make(<keyed-option>,
-                  names: #("define", "D")));
+                  names: #("define", "D"),
+                  help: "x"));
   parser
 end function make-parser;
 
@@ -53,6 +58,7 @@ define test test-command-line-parser ()
                      "--quux", "quux-value",
                      "--optimize=optimize-value",
                      "--warning", "warning-value",
+                     "--warning", "warning-value2",
                      "--define", "key", "=", "value");
   check-equal("verbose is true",
               get-option-value(parser, "verbose"),
@@ -68,142 +74,117 @@ define test test-command-line-parser ()
               "optimize-value");
   check-equal("warning has correct value",
               get-option-value(parser, "warning"),
-              #("warning-value"));
+              #("warning-value", "warning-value2"));
   let defines = get-option-value(parser, "define");
   check-equal("key is defined as 'value'", defines["key"], "value");
   check-true("positional options are empty",
-             empty?(parser.positional-arguments));
+             empty?(parser.positional-options));
 end test test-command-line-parser;
 
-define test test-<flag-option> ()
-  local
-    method parse (default, argv)
-      let p = make(<command-line-parser>);
-      add-option(p, make(<flag-option>,
-                         names: #("verbose", "v"),
-                         negative-names: #("quiet", "q"),
-                         default: default));
-      parse-command-line(p, argv);
-      p
-    end;
-  assert-false(option-value(make(<flag-option>)), "boolean flag defaults to false?");
-  for (item in list(list(#f, #["--verbose"], #t),
-                    list(#t, #["--verbose"], #t),
-                    list(#f, #["-v"],        #t),
-                    list(#f, #["--quiet"],   #f),
-                    list(#t, #["--quiet"],   #f),
-                    list(#f, #["-q"],        #f)))
-    let (default, argv, want) = apply(values, item);
-    assert-equal(want, get-option-value(parse(default, argv), "verbose"), item);
-  end;
-end test;
-
-define test test-<parameter-option> ()
-  local
-    method parse (argv)
-      let p = make(<command-line-parser>);
-      add-option(p, make(<parameter-option>, names: #("airport", "a")));
-      parse-command-line(p, argv);
-      p
-    end;
-  // I've never seen any command line parser handle '=' with spaces around it.
-  // Or maybe they do and I've just never seen it used? Should we even support
-  // that? --cgay
-  for (argv in list(vector("--airport", "BOS"),
-                    vector("--airport=BOS"),
-                    vector("--airport", "=", "BOS"),
-                    vector("-aBOS"),
-                    vector("-a=BOS"),
-                    vector("-a", "=", "BOS")))
-    let parser = parse(argv);
-    assert-equal("BOS", get-option-value(parser, "airport"),
-                 format-to-string("argv = %=", argv));
-    assert-equal("BOS", get-option-value(parser, "a"),
-                 format-to-string("argv = %=", argv));
-  end;
-end test;
-
-// This test is pretty brittle.  Would be good to make it ignore
-// whitespace to some extent.
+// This test is pretty brittle.  Would be good to make it ignore whitespace to
+// some extent. It verifies the basic formatting and that the options are
+// displayed in the order they were added to the parser.
+//
+// TODO(cgay): test subcommand help
 define test test-synopsis-format ()
   let parser = make-parser();
   let synopsis = with-output-to-string (stream)
-                   print-synopsis(parser, stream,
-                                  usage: "Usage: foo",
-                                  description: "ABCDEFG")
+                   print-synopsis(parser, #f, stream: stream)
                  end;
-  let expected = "Usage: foo\n"
-                 "ABCDEFG\n"
-                 "  -v, -q, --verbose, --quiet   Be more or less verbose.\n"
-                 "  -f, -B, --foo, --no-foo      Be more or less foonly.\n"
-                 "  -Q, --quux QUUX              Quuxly quacksly\n"
-                 "  -O, --optimize LEVEL         \n"
-                 "  -W, --warning WARNING        \n"
-                 "  -D, --define DEFINE          \n";
-  check-equal("synopsis same?", expected, synopsis);
+  let expected = #:str:"x
+
+Usage: %s [options]
+
+Options:
+  -h, --help                   Display this message.
+  -v, -q, --verbose, --quiet   Be more or less verbose.
+  -f, -B, --foo, --no-foo      Be more or less foonly.
+  -Q, --quux QUUX              Quuxly quacksly
+  -O, --optimize LEVEL         x
+  -W, --warning WARNING        x
+  -D, --define DEFINE          x
+";
+  assert-equal(format-to-string(expected, program-name()), synopsis);
 end;
 
 define test test-help-substitutions ()
   let option = make(<flag-option>,
                     names: #("flag"),
                     default: #t,
-                    help: "%%%default%%prog%");
-  check-equal("", "%#t%prog%", option.option-help);
+                    // %default% => #t, %prog% => %prog%, %app% => app name
+                    help: "%default% %prog% %app%");
+  assert-equal(format-to-string("#t %%prog%% %s", program-name()),
+               option.option-help);
 end;
 
 // Verify that the usage: and description: passed to parse-command-line
 // are displayed correctly.
 define test test-usage ()
-  let parser = make(<command-line-parser>);
-  add-option(parser, make(<flag-option>, names: #("x")));
+  let parser = make(<command-line-parser>, help: "x");
+  add-option(parser, make(<flag-option>,
+                          names: #("x"),
+                          help: "x"));
   dynamic-bind (*standard-output* = make(<string-stream>,
                                          direction: #"output"))
-    check-condition("", <help-requested>,
-                    parse-command-line(parser, #("--help"),
-                                       usage: "u", description: "d"));
+    assert-signals(<abort-command-error>,
+                   parse-command-line(parser, #("--help")));
     let actual = *standard-output*.stream-contents;
-    let expected = "u\nd\n";
-    check-true(format-to-string("%= starts with %=?", actual, expected),
-               starts-with?(actual, expected));
+    let expected = "x\n\nUsage:";
+  assert-true(starts-with?(actual, expected),
+              format-to-string("%= starts with %=?", actual, expected))
   end;
 end test;
 
 
 define test test-duplicate-name-error ()
-  let parser = make(<command-line-parser>);
-  add-option(parser, make(<flag-option>, names: #("x")));
+  let parser = make(<command-line-parser>,
+                    help: "a parser");
+  add-option(parser, make(<flag-option>,
+                          names: #("x"),
+                          help: "x"));
   assert-signals(<command-line-parser-error>,
-                 add-option(parser, make(<flag-option>, names: #("x"))));
+                 add-option(parser, make(<flag-option>,
+                                         names: #("x"),
+                                         help: "x")));
 end test;
 
 define test test-option-type ()
   local method make-parser ()
-          let parser = make(<command-line-parser>);
+          let parser = make(<command-line-parser>, help: "a parser");
           add-option(parser, make(<parameter-option>,
                                   names: #("integer"),
-                                  type: <integer>));
+                                  type: <integer>,
+                                  help: "x"));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("sequence"),
                                   type: <sequence>));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("list"),
                                   type: <list>));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("vector"),
                                   type: <vector>));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("symbol"),
                                   type: <symbol>));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("number"),
                                   type: <number>));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("real"),
                                   type: <real>));
           add-option(parser, make(<parameter-option>,
+                                  help: "x",
                                   names: #("string"),
                                   type: <string>)); // uses default case, no conversion
           add-option(parser, make(<repeated-parameter-option>,
+                                  help: "x",
                                   names: #("repeated-integer"),
                                   type: <integer>));
           parser
@@ -234,80 +215,91 @@ define test test-option-type ()
 end test test-option-type;
 
 define test test-option-default ()
-  let parser = make(<command-line-parser>);
+  let parser = make(<command-line-parser>, help: "a parser");
   check-condition("bad default", <command-line-parser-error>,
                   add-option(parser, make(<parameter-option>,
-                                          names: #("foo"),
+                                          help: "x",
+                                          names: #["foo"],
                                           type: <integer>,
                                           default: "string")));
   check-no-condition("good default",
                      add-option(parser, make(<parameter-option>,
-                                             names: #("bar"),
+                                             help: "x",
+                                             names: #["bar"],
                                              type: <integer>,
                                              default: 1234)));
   check-condition("bad default for repeated option", <command-line-parser-error>,
                   add-option(parser, make(<repeated-parameter-option>,
-                                          names: #("baz"),
+                                          help: "x",
+                                          names: #["baz"],
                                           type: <integer>,
                                           default: 1234)));
   check-no-condition("good default for repeated option",
                      add-option(parser, make(<repeated-parameter-option>,
-                                             names: #("fez"),
+                                             help: "x",
+                                             names: #["fez"],
                                              type: <integer>,
                                              default: #[1, 2, 3, 4])));
 end test test-option-default;
 
 
-define test test-choice-option ()
-  let parser = make(<command-line-parser>);
-  add-option(parser, make(<choice-option>,
-                          names: #("foo"),
-                          choices: #("a", "b"),
-                          test: string-equal-ic?));
-  check-condition("bad choice", <usage-error>,
-                  parse-command-line(parser, #("--foo=x")));
-
-  check-no-condition("good 1", parse-command-line(parser, #("--foo=a")));
-  check-equal("", "a", get-option-value(parser, "foo"));
-
-  check-no-condition("nocase test", parse-command-line(parser, #("--foo=B")));
-  check-equal("nocase value", "B", get-option-value(parser, "foo"));
-end;
-
 define command-line <defcmdline-test-parser> ()
-  synopsis "test [options] file...",
-    description: "Stupid test program doing nothing with the args.";
-  option verbose?, names: #("v", "verbose"),
-    help: "Explanation";
-  option other, names: #("other-option"),
-    help: "foo";
-  option log-filename, names: #("log", "l"),
-    help: "Log file pathname",
-    kind: <parameter-option>;
-  positional-arguments file-names;
+  option defcmdline-verbose? :: <boolean>,
+    names: #("v", "verbose"),
+    help: "Explanation",
+    kind: <flag-option>;
+  option defcmdline-other,
+    names: #("other"),
+    help: "Other stuff";
+  option defcmdline-log-filename :: <string>,
+    names: #("log", "l"),
+    kind: <parameter-option>,
+    variable: "<file>",
+    help: "Log file pathname";
 end command-line;
 
+ignorable(defcmdline-log-filename);
+ignorable(defcmdline-other);
 
 define test test-defcmdline ()
-  let parser = make(<defcmdline-test-parser>);
-  parse-command-line(parser, #());
-  check-false("Verbose flag is false if not supplied.",
-              parser.verbose?);
-  check-true("Positional options are empty.",
-             empty?(parser.file-names));
-end test test-defcmdline;
+  let parser = make(<defcmdline-test-parser>, help: "x");
+  assert-false(parser.defcmdline-verbose?);
+  assert-false(parser.defcmdline-other);
+  assert-false(parser.defcmdline-log-filename);
 
-// Prevent warnings for unused defs.
-ignore(log-filename);
-ignore(other);
+  parse-command-line(parser, #["-v", "--other", "--log", "/tmp/log"]);
+  assert-true(parser.defcmdline-verbose?);
+  assert-true(parser.defcmdline-other);
+  assert-equal("/tmp/log", parser.defcmdline-log-filename);
+end test;
 
 define test test-min-max-positional-arguments ()
-  let parser = make(<command-line-parser>,
-                    min-positional-arguments: 1,
-                    max-positional-arguments: 2);
-  assert-signals(<usage-error>, parse-command-line(parser, #[]), "xyz");
-  assert-no-errors(parse-command-line(parser, #["a"]), "abc");
-  assert-no-errors(parse-command-line(parser, #["a", "b"]), "xxx");
-  assert-signals(<usage-error>, parse-command-line(parser, #["a", "b", "c"]), "yyy");
-  assert-signals(<help-requested>, parse-command-line(parser, #["-h"]));
+  local
+    method make-parser ()
+      make(<command-line-parser>,
+           help: "x",
+           options: list(make(<positional-option>,
+                              name: "p1",
+                              help: "x"),
+                         make(<positional-option>,
+                              name: "p2",
+                              help: "x",
+                              required?: #f)))
+    end;
+  assert-signals(<usage-error>, parse-command-line(make-parser(), #[]));
+
+  let p = make-parser();
+  assert-no-errors(parse-command-line(p, #["a"]));
+  assert-equal("a", get-option-value(p, "p1"));
+  assert-false(get-option-value(p, "p2"));
+
+  let p = make-parser();
+  assert-no-errors(parse-command-line(p, #["a", "b"]));
+  assert-equal("a", get-option-value(p, "p1"));
+  assert-equal("b", get-option-value(p, "p2"));
+
+  assert-signals(<usage-error>,
+                 parse-command-line(make-parser(), #["a", "b", "c"]));
+  assert-signals(<abort-command-error>,
+                 parse-command-line(make-parser(), #["-h"]));
 end test;

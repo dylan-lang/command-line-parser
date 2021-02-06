@@ -3,24 +3,17 @@ synopsis: Interface macros for parser definition and option access.
 authors: David Lichteblau <lichteblau@fhtw-berlin.de>
 copyright: See LICENSE file in this distribution.
 
-// TODO(cgay): Two improvements for synopsis
-//   1. We have almost all the information we need to automatically generate
-//      the usage line: "test [options] file...". The `positional-arguments`
-//      clause needs a `name:` option so the dylan name needn't be used.
-//   2. It's odd that `description` is a keyword argument to the synopsis clause
-//      when the description is the one thing that can't be auto-generated and
-//      should always be specified. Make it its own `description` clause and
-//      change `synopsis` to `usage`, which should usually not be needed.
-//
-// TODO(cgay): Support for min/max number of positional args. The parser already
-//   supports them. (This will improve `usage` auto-generation too.)
+
+// TODO(cgay): provide a way to supply the help: initarg to the parser
+//   within the macro syntax. Current easy workaround: make(..., help:)
 
 // Introduction
 // ============
 //
 // This is a set of macros designed to work on top of Eric Kidd's
-// command-line-parser library.  The idea is to provide a more readable
-// interface for parser definition and option access.
+// command-line-parser library.  It provides a much more concise and readable
+// command line definition, but perhaps even more importantly it avoids the
+// need to lookup command-line values by name with get-option-value(parser, "name").
 //
 //
 // Emacs
@@ -47,19 +40,20 @@ copyright: See LICENSE file in this distribution.
 //     be made automatically.
 //
 //         define command-line <my-parser> ()
-//           option verbose?, names: #("verbose", "v");
+//           option command-verbose?,
+//             names: #("verbose", "v"),
+//             help: "Be more verbose.";          // help: is required.
 //         end;
 //
 //     Notes:
 //       - Default superclass is <command-line-parser>.
 //
-//       - Default option class is <flag-option>.
+//       - Default option class is <flag-option>. You can specify an option
+//         class with the kind: keyword:
+//           option command-logfile, kind: <parameter-option>;
 //
-//         You can specify an alternative class with the kind: keyword:
-//           option logfile, kind: <parameter-option>;
-//
-//       - For the options, default values are possible:
-//           option logfile = "default.log",
+//       - Default values are possible:
+//           option command-logfile :: <string> = "default.log",
 //             kind: <parameter-option>,
 //             names: #("logfile", "L");
 //
@@ -74,13 +68,7 @@ copyright: See LICENSE file in this distribution.
 //         Future version will probably provide a facility for automatic
 //         error handling and error message generation.
 //
-//       - Remaining keywords are handed as initargs to make.
-//
-//       - Besides ``option'' there is also ``positional-arguments'' and
-//         ``synopsis'':
-//           positional-arguments file-names;
-//           synopsis "Usage: foo\n",
-//             description: "This program fooifies.\n";
+//       - Remaining keywords are handed as initargs to make(subclass(<option>)).
 //
 //
 // Parsing the Command Line
@@ -124,30 +112,6 @@ copyright: See LICENSE file in this distribution.
 //     slots with "-parser" appended to the name:
 //         let option-parser = parser.verbose?-parser;
 //
-//
-// Synopsis generation
-// ===================
-//
-//    Suppose you say
-//
-//         define command-line <main-parser> ()
-//           synopsis "test [options] file...",
-//             description: "Stupid test program doing nothing with the args.";
-//           option verbose?, names: #("v", "verbose"),
-//             help: "Explanation";
-//           option other, names: #("other-option"),
-//             help: "foo";
-//           option version, help: "Show version";
-//         end command-line;
-//
-//    Then print-synopsis(parser, stream) will print something like:
-//
-//         Usage: test [options] file...
-//         Stupid test program doing nothing with the args.
-//           -v, --verbose                Explanation
-//               --other-option           foo
-//               --version                Show version
-//
 
 // Note: add the `traced` adjective to the `define macro` definitions to get
 // some help from the compiler when debugging these hairy macros.
@@ -161,7 +125,6 @@ copyright: See LICENSE file in this distribution.
 //  - Transform human-readable `?options' into patterns of the form
 //      [option-name, type, [default-if-any], #rest initargs]
 //      [positional-arguments-name]
-//      (usage, description)
 //
 //  - Hand it over to `defcmdline-rec'.
 //
@@ -185,10 +148,6 @@ define macro command-line-definer
     { option ?:name :: ?value-type:expression = ?default:expression,
         #rest ?initargs:*; ... }
       => { [?name, ?value-type, [?default], ?initargs] ... }
-    { positional-arguments ?:name; ... }
-      => { [?name] ... }
-    { synopsis ?usage:expression, #key ?description:expression = #f; ... }
-      => { (?usage, ?description) ... }
     { } => { }
 end macro;
 
@@ -201,9 +160,8 @@ end macro;
 //     prepending it with the parser class name in the case of "option"
 //     or "positional-arguments" clauses. The resulting `?processed' form
 //     is a sequence of the following forms:
-//       (usage, description)
 //       [class-name, option-name, value-type, [default], initargs]
-//       [class-name, positional-arguments-name]
+//       [positional-arguments-name]
 //   - Finally, pass the `?processed' forms to `defcmdline-aux'.
 //
 // Explanation: The options will be processed by auxiliary rules
@@ -218,10 +176,6 @@ define macro defcmdline-rec
     { defcmdline-rec ?:name (?supers:*) (?processed:*) [?option:*] ?rem:* end }
       => { defcmdline-rec ?name (?supers)
              (?processed [?name, ?option]) ?rem
-           end }
-    { defcmdline-rec ?:name (?supers:*) (?processed:*) (?usage:*) ?rem:* end }
-      => { defcmdline-rec ?name (?supers)
-             ((?usage) ?processed) ?rem
            end }
 end macro;
 
@@ -240,14 +194,11 @@ end macro;
 //   - (defcmdline-accessors) accessors that ask the parsers for the
 //     values that were found
 //
-//  - (defcmdline-synopsis) a method printing usage information
-//
 define macro defcmdline-aux
     { defcmdline-aux ?:name (?supers:*) ?options:* end }
       => { defcmdline-class ?name (?supers) ?options end;
            defcmdline-init ?name ?options end;
-           defcmdline-accessors ?name ?options end;
-           defcmdline-synopsis ?name ?options end }
+           defcmdline-accessors ?name ?options end }
 end macro;
 
 define macro defcmdline-class
@@ -260,7 +211,7 @@ define macro defcmdline-class
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
        #rest ?initargs:*,
        #key ?kind:expression = <flag-option>,
-            ?names:expression = #f,
+            ?names:expression = #f, // TODO(cgay): name:expression
        #all-keys] ... }
       => { constant slot ?option ## "-parser"
              = begin
@@ -271,10 +222,6 @@ define macro defcmdline-class
                       ?default,
                       ?initargs);
                end; ... }
-    { [?class:name, ?positional-arguments:name] ... }
-      => {  ... }
-    { (?usage:*) ... }
-      => { ... }
     { } => { }
 
   default:
@@ -296,10 +243,6 @@ define macro defcmdline-init
     { [?class:name, ?option:name, ?value-type:expression, [?default:*],
        ?initargs:*] ... }
       => { add-option(instance, ?option ## "-parser" (instance)); ... }
-    { [?class:name, ?positional-arguments:name] ... }
-      => {  ... }
-    { (?usage:*) ... }
-      => { ... }
     { } => { }
 end macro;
 
@@ -315,30 +258,6 @@ define macro defcmdline-accessors
             => (value);
              let optionparser = ?option ## "-parser" (arglistparser);
              option-value(optionparser);
-           end method ?option; ... }
-    { [?class:name, ?positional-arguments:name] ... }
-      => { define method ?positional-arguments (arglistparser :: ?class)
-            => (value :: <sequence>);
-             positional-arguments(arglistparser);
            end method; ... }
-    { (?usage:*) ... }
-      => { ... }
     { } => { }
-end macro;
-
-define macro defcmdline-synopsis
-    { defcmdline-synopsis ?:name (?usage:expression, ?description:expression)
-        ?options:*
-      end }
-      => { define method print-synopsis (parser :: ?name, stream :: <stream>,
-                                         #next next-method,
-                                         #key usage, description)
-            => ();
-             let usage = usage | ?usage;
-             let desc = description | ?description;
-             next-method(parser, stream, usage: usage, description: desc)
-           end method }
-
-    { defcmdline-synopsis ?:name ?options:* end }
-      => { }
 end macro;
