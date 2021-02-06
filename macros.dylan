@@ -3,6 +3,18 @@ synopsis: Interface macros for parser definition and option access.
 authors: David Lichteblau <lichteblau@fhtw-berlin.de>
 copyright: See LICENSE file in this distribution.
 
+// TODO(cgay): Two improvements for synopsis
+//   1. We have almost all the information we need to automatically generate
+//      the usage line: "test [options] file...". The `positional-arguments`
+//      clause needs a `name:` option so the dylan name needn't be used.
+//   2. It's odd that `description` is a keyword argument to the synopsis clause
+//      when the description is the one thing that can't be auto-generated and
+//      should always be specified. Make it its own `description` clause and
+//      change `synopsis` to `usage`, which should usually not be needed.
+//
+// TODO(cgay): Support for min/max number of positional args. The parser already
+//   supports them. (This will improve `usage` auto-generation too.)
+
 // Introduction
 // ============
 //
@@ -137,6 +149,8 @@ copyright: See LICENSE file in this distribution.
 //               --version                Show version
 //
 
+// Note: add the `traced` adjective to the `define macro` definitions to get
+// some help from the compiler when debugging these hairy macros.
 
 // Macro COMMAND-LINE-DEFINER--exported
 // =======================================
@@ -262,7 +276,7 @@ define macro defcmdline-class
     { (?usage:*) ... }
       => { ... }
     { } => { }
-    
+
   default:
     { ?:expression }
       => { default: ?expression }
