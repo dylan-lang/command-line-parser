@@ -3,6 +3,12 @@ synopsis: Individual option parsers.
 authors: Eric Kidd, Jeff Dubrule <igor@pobox.com>
 copyright: See LICENSE file in this distribution.
 
+
+define open class <positional-option> (<option>)
+  inherited slot option-required? = #t;
+end;
+
+
 //======================================================================
 //  <flag-option>
 //======================================================================
@@ -13,6 +19,9 @@ copyright: See LICENSE file in this distribution.
 //
 //  Examples:
 //    -q, -v, --quiet, --verbose
+//
+// TODO(cgay): --verbose={true/false,yes/no,on/off} should be valid. Maybe it
+// will Just Work if we turn on option-might-have-parameters? ?
 
 define open primary class <flag-option> (<option>)
   inherited slot option-might-have-parameters? = #f;
@@ -42,9 +51,9 @@ define method negative-option?
 end;
 
 define method parse-option
-    (option :: <flag-option>, parser :: <command-line-parser>)
+    (option :: <flag-option>, parser :: <command>)
  => ()
-  let token = get-argument-token(parser);
+  let token = pop-token(parser);
   option.option-value := ~negative-option?(option, token);
 end;
 
@@ -64,15 +73,15 @@ define class <parameter-option> (<option>)
 end class <parameter-option>;
 
 define method parse-option
-    (option :: <parameter-option>, parser :: <command-line-parser>)
+    (option :: <parameter-option>, parser :: <command>)
  => ()
-  get-argument-token(parser);
-  if (instance?(peek-argument-token(parser), <equals-token>))
-    get-argument-token(parser);
+  pop-token(parser);
+  if (instance?(peek-token(parser), <equals-token>))
+    pop-token(parser);
   end if;
   option.option-value
-    := parse-option-parameter(get-argument-token(parser).token-value,
-                              option.option-type);
+    := parse-option-value(pop-token(parser).token-value,
+                          option.option-type);
 end method parse-option;
 
 define method format-option-usage
@@ -92,30 +101,21 @@ end;
 //    -wall, -w=all, -w = all, --warnings all, --warnings=all
 
 define class <repeated-parameter-option> (<option>)
-  inherited slot option-value-is-collection? = #t;
-end class <repeated-parameter-option>;
-
-define method reset-option
-    (option :: <repeated-parameter-option>) => ()
-  next-method();
-  if (option.option-default)
-    option.option-value := as(<deque>, option.option-default);
-  else
-    option.option-value := make(<deque> /*, of: <string> */);
-  end;
+  inherited slot option-repeated? = #t;
+  inherited slot option-default = make(<deque>);
+  inherited slot option-value = make(<deque>);
 end;
 
 define method parse-option
-    (option :: <repeated-parameter-option>,
-     parser :: <command-line-parser>)
+    (option :: <repeated-parameter-option>, parser :: <command>)
  => ()
-  get-argument-token(parser);
-  if (instance?(peek-argument-token(parser), <equals-token>))
-    get-argument-token(parser);
+  pop-token(parser);
+  if (instance?(peek-token(parser), <equals-token>))
+    pop-token(parser);
   end if;
   push-last(option.option-value,
-            parse-option-parameter(get-argument-token(parser).token-value,
-                                   option.option-type));
+            parse-option-value(pop-token(parser).token-value,
+                               option.option-type));
 end method parse-option;
 
 define method format-option-usage
@@ -137,26 +137,27 @@ end;
 //  Counter-examples:
 //    -z 3, --zip 3, --zip3
 
+// TODO(cgay): <optional-value-option> would be a better name.
+
 define class <optional-parameter-option> (<option>)
 end class <optional-parameter-option>;
 
 define method parse-option
-    (option :: <optional-parameter-option>, parser :: <command-line-parser>)
+    (option :: <optional-parameter-option>, parser :: <command>)
  => ()
-  let token = get-argument-token(parser);
-  let next = argument-tokens-remaining?(parser) &
-    peek-argument-token(parser);
+  let token = pop-token(parser);
+  let next = tokens-remaining?(parser) & peek-token(parser);
 
   option.option-value :=
     case
       instance?(next, <equals-token>) =>
-        get-argument-token(parser);
-        parse-option-parameter(get-argument-token(parser).token-value,
-                               option.option-type);
+        pop-token(parser);
+        parse-option-value(pop-token(parser).token-value,
+                           option.option-type);
       (instance?(token, <short-option-token>)
          & token.tightly-bound-to-next-token?) =>
-        parse-option-parameter(get-argument-token(parser).token-value,
-                               option.option-type);
+        parse-option-value(pop-token(parser).token-value,
+                           option.option-type);
       otherwise =>
         #t;
     end case;
@@ -183,26 +184,22 @@ end;
 //  Examples:
 //    -Dkey, -Dkey=value, -D key = value, --define key = value
 
-define class <keyed-option> (<option>)
-end class <keyed-option>;
+// TODO(cgay): shouldn't these be `repeated?`. Needs a test.
 
-define method reset-option
-    (option :: <keyed-option>) => ()
-  next-method();
-  option.option-value := make(<string-table>);
+define class <keyed-option> (<option>)
+  inherited slot option-value = make(<string-table>);
 end;
 
 define method parse-option
-    (option :: <keyed-option>,
-     parser :: <command-line-parser>)
+    (option :: <keyed-option>, parser :: <command>)
  => ()
-  get-argument-token(parser);
-  let key = get-argument-token(parser).token-value;
+  pop-token(parser);
+  let key = pop-token(parser).token-value;
   let value =
-    if (instance?(peek-argument-token(parser), <equals-token>))
-      get-argument-token(parser);
-      parse-option-parameter(get-argument-token(parser).token-value,
-                             option.option-type)
+    if (instance?(peek-token(parser), <equals-token>))
+      pop-token(parser);
+      parse-option-value(pop-token(parser).token-value,
+                         option.option-type)
     else
       #t
     end;
@@ -221,12 +218,6 @@ end;
 //
 // Limits possible values to a set of predefined choices.
 
-// TODO(cgay): It should be possible to make one of the choices be
-// no-value, but subclassing <optional-parameter-option> isn't right.
-// Need to get rid of <optional-parameter-option> and replace it with
-// a value-optional?: init arg on <option> or something.  Probably the
-// same for repeated options.
-
 define open class <choice-option> (<parameter-option>)
   constant slot option-choices :: <sequence>,
     required-init-keyword: choices:;
@@ -235,7 +226,7 @@ define open class <choice-option> (<parameter-option>)
 end;
 
 define method parse-option
-    (option :: <choice-option>, parser :: <command-line-parser>)
+    (option :: <choice-option>, parser :: <command>)
  => ()
   next-method();
   if (~member?(option.option-value, option.option-choices,
@@ -247,3 +238,20 @@ define method parse-option
                 join(option.option-choices, ", ", conjunction: " and "));
   end;
 end method parse-option;
+
+//======================================================================
+//  <positional-option>
+//======================================================================
+
+define method parse-option
+    (option :: <positional-option>, cmd :: <command>) => ()
+  let parsed-value
+    = parse-option-value(pop-token(cmd).token-value,
+                         option.option-type);
+  if (option.option-repeated?)
+    option.option-value
+      := concatenate(option.option-value | #(), list(parsed-value));
+  else
+    option.option-value := parsed-value;
+  end;
+end method;
