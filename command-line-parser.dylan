@@ -740,7 +740,7 @@ define function process-tokens
           option.option-present? := #t;
         end;
       <short-option-token>, <long-option-token> =>
-        let option = find-option(parser, value)
+        let option = find-option(subcmd | parser, value)
           | usage-error("Unrecognized option: %s%s",
                         if (value.size = 1) "-" else "--" end,
                         value);
