@@ -2,6 +2,9 @@ Module: command-line-parser
 Synopsis: Implements the --help flag and help subcommand
 
 
+// TODO(cgay): Automatically display option default values. It's too easy to
+// forget to add %default% to the help string.
+
 // TODO(cgay): Wrap the descriptions nicely
 
 define function program-name () => (name :: <string>)
