@@ -69,7 +69,7 @@ define module command-line-parser
     add-option,
     parse-command-line,
     get-option-value,
-    print-synopsis,
+    print-help,
 
     parse-option-value;
 

@@ -754,7 +754,7 @@ define function process-tokens
         if (instance?(option, <help-option>))
           // Handle --help early in case the remainder of the command line is
           // invalid or there are missing required arguments.
-          print-synopsis(parser, subcmd);
+          print-help(parser, subcmd);
           abort-command(0);
         end;
         parse-option(option, parser);
