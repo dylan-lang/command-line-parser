@@ -2,6 +2,9 @@ Module: command-line-parser
 Synopsis: Implements the --help flag and help subcommand
 
 
+// TODO(cgay): Automatically display option default values. It's too easy to
+// forget to add %default% to the help string.
+
 // TODO(cgay): Wrap the descriptions nicely
 
 define function program-name () => (name :: <string>)
@@ -68,12 +71,12 @@ define method execute-subcommand
   if (name)
     let subcmd = find-subcommand(parser, name);
     if (subcmd)
-      print-synopsis(parser, subcmd);
+      print-help(parser, subcmd);
     else
       usage-error("Subcommand %= not found.", name);
     end;
   else
-    print-synopsis(parser, #f);     // 'app help' same as 'app --help'
+    print-help(parser, #f);     // 'app help' same as 'app --help'
   end;
 end method;
 
@@ -146,10 +149,10 @@ define method format-option-usage
   option.canonical-option-name
 end;
 
-define open generic print-synopsis
+define open generic print-help
     (parser :: <command-line-parser>, subcmd :: false-or(<subcommand>), #key stream);
 
-define method print-synopsis
+define method print-help
     (parser :: <command-line-parser>, subcmd == #f,
      #key stream :: <stream> = *standard-output*)
   format(stream, "%s\n", parser.command-help);
@@ -177,7 +180,7 @@ define method print-synopsis
   end;
 end method;
 
-define method print-synopsis
+define method print-help
     (parser :: <command-line-parser>, subcmd :: <subcommand>,
      #key stream :: <stream> = *standard-output*)
   format(stream, "%s\n", subcmd.command-help);

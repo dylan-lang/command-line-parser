@@ -89,7 +89,7 @@ end test test-command-line-parser;
 define test test-synopsis-format ()
   let parser = make-parser();
   let synopsis = with-output-to-string (stream)
-                   print-synopsis(parser, #f, stream: stream)
+                   print-help(parser, #f, stream: stream)
                  end;
   let expected = #:str:"x
 

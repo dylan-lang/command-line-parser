@@ -6,6 +6,7 @@ copyright: See LICENSE file in this distribution.
 //======================================================================
 //  The All-Singing, All-Dancing Argument Parser
 //======================================================================
+//
 //  Ole J. Tetlie wrote an option parser, and it was pretty good. But it
 //  didn't support all the option types required by d2c, and besides, we
 //  felt a need to overdo something.
@@ -29,19 +30,11 @@ copyright: See LICENSE file in this distribution.
 //  All the tokens on that command line are arguments. "-x" and "--y"
 //  are options, and "bar" is a parameter. "baz" is a positional argument.
 
-// todo -- There is no indication of default values in the generated synopsis,
-//         and the syntax for specifying "syntax" and docstring is bizarre at
-//         best.  --cgay 2006.11.27
-
 // TODO(cgay): <choice-option>: --foo=a|b|c (#f as choice means option
 // value is optional?)
 
 // TODO(cgay): Add a required: (or required?: ?) init keyword that
 // makes non-positional args required else an error is generated.
-
-// TODO(cgay): This error sucks: "<unknown-option>" is not present as
-// a key for {<string-table>: size 12}.  How about "<unknown-option>
-// is not a recognized command-line option."  See next item.
 
 // TODO(cgay): With an option that has negative options (e.g.,
 // --verbose and --quiet in the same option) just show the positive
@@ -747,14 +740,14 @@ define function process-tokens
           option.option-present? := #t;
         end;
       <short-option-token>, <long-option-token> =>
-        let option = find-option(parser, value)
+        let option = find-option(subcmd | parser, value)
           | usage-error("Unrecognized option: %s%s",
                         if (value.size = 1) "-" else "--" end,
                         value);
         if (instance?(option, <help-option>))
           // Handle --help early in case the remainder of the command line is
           // invalid or there are missing required arguments.
-          print-synopsis(parser, subcmd);
+          print-help(parser, subcmd);
           abort-command(0);
         end;
         parse-option(option, parser);
