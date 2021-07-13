@@ -1,5 +1,15 @@
 Module: command-line-parser-test-suite
 
+// Note: when debugging tests it can be useful to wrap them in
+//   block ()
+//     ...
+//   exception (ex :: <usage-error>)
+//     signal(make(<simple-error>, ...))
+//   end;
+// so that Testworks' --debug=crashes works. This is only an issue when debugging
+// command-line-parser tests. We might want to just wrap them all in a macro that
+// does that.
+
 define method parse-one (option, argv)
   let p = make(<command-line-parser>,
                help: "x",
@@ -64,7 +74,32 @@ define test test-parameter-option ()
 end test;
 
 define test test-keyed-option ()
-end;
+  local method opt ()
+          // Make a new one each time to ensure option-value slot cleared.
+          make(<keyed-option>, names: #("define", "D"), help: "help")
+        end;
+  let cmd = parse-one(opt(), #[]);
+  assert-true(empty?(get-option-value(cmd, "define")));
+  assert-true(empty?(get-option-value(cmd, "D")));
+
+  // When no "=value" given value defaults to #t?
+  let cmd = parse-one(opt(), #["-Dkey"]);
+  assert-equal(1, size(get-option-value(cmd, "D")));
+  assert-equal(#t, get-option-value(cmd, "define")["key"]);
+
+  // The rest should all set "key" => "value".
+  for (args in #(#("-Dkey=value"),
+                 #("-D", "key=value"),
+                 #("-D", "key", "=", "value"),
+                 #("--define", "key=value"),
+                 #("--define", "key", "=", "value")))
+    let cmd = parse-one(opt(), args);
+    let table = get-option-value(cmd, "define");
+    assert-true(table);
+    assert-equal(1, size(table));
+    assert-equal("value", table["key"]);
+  end;
+end test;
 
 define test test-repeated-parameter-option ()
 end;
