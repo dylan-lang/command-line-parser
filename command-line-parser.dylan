@@ -320,6 +320,8 @@ define function tokens-remaining?
   ~parser.parser-tokens.empty?
 end;
 
+// TODO(cgay): This says it returns false-or, but it doesn't. I think it would be an
+// improvement to make it do that and get rid of tokens-remaining?.
 define function peek-token
     (parser :: <command>) => (token :: false-or(<token>))
   unless (tokens-remaining?(parser))
@@ -611,8 +613,8 @@ define function tokenize-args
       end
     end,
     // Add a token to our deque
-    method token (class :: <class>, value :: <string>,
-                  #rest keys, #key, #all-keys) => ()
+    method add-token (class :: <class>, value :: <string>,
+                      #rest keys, #key, #all-keys) => ()
       apply(add-argument-token, parser, class, value, keys);
     end,
     method parse-short-option (arg)
@@ -624,14 +626,13 @@ define function tokenize-args
                 & opt.option-might-have-parameters?
                 & i + 1 < arg.size)
             // Take rest of argument, and use it as a parameter.
-            token(<short-option-token>, name, tightly-bound?: #t);
-            token(<argument-token>,
-                  copy-sequence(arg, start: i + 1));
+            add-token(<short-option-token>, name, tightly-bound?: #t);
+            add-token(<argument-token>, copy-sequence(arg, start: i + 1));
             done();
           else
-            // A solitary option with no parameter.
-            // TODO(cgay): why do we not exit the loop here??
-            token(<short-option-token>, name);
+            // A solitary option with no parameter. Do not exit the loop because there
+            // may be multiple short options strung together as in 'ls -ltR'.
+            add-token(<short-option-token>, name);
           end if;
         end for;
       end block;
@@ -640,22 +641,22 @@ define function tokenize-args
     let arg = pop(args);
     case
       (arg = "=") =>
-        token(<equals-token>, "=");
-        token(<argument-token>, next-arg());
+        add-token(<equals-token>, "=");
+        add-token(<argument-token>, next-arg());
 
       starts-with?(arg, "--") =>
-        token(<long-option-token>, copy-sequence(arg, start: 2));
+        add-token(<long-option-token>, copy-sequence(arg, start: 2));
 
       starts-with?(arg, "-") =>
         if (arg.size = 1)
           // Probably a fake filename representing stdin ('cat -')
-          token(<argument-token>, "-");
+          add-token(<argument-token>, "-");
         else
           parse-short-option(arg);
         end if;
 
       otherwise =>
-        token(<argument-token>, arg);
+        add-token(<argument-token>, arg);
     end case;
   end until;
 end function tokenize-args;

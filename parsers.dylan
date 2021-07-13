@@ -195,14 +195,23 @@ define method parse-option
  => ()
   pop-token(parser);
   let key = pop-token(parser).token-value;
-  let value =
-    if (instance?(peek-token(parser), <equals-token>))
-      pop-token(parser);
-      parse-option-value(pop-token(parser).token-value,
-                         option.option-type)
-    else
-      #t
-    end;
+  let equal-pos = find-key(key, curry(\=, '='));
+  let value = if (equal-pos)
+                // We have `-D key=value` as tokens #("-D", "key=value"). The "key=value"
+                // can't be further broken down into tokens by the tokenizer because it
+                // doesn't know that it is parsing a <keyed-option> at that point, so do
+                // it here.
+                let v = copy-sequence(key, start: equal-pos + 1);
+                key := copy-sequence(key, end: equal-pos);
+                parse-option-value(v, option.option-type);
+              elseif (tokens-remaining?(parser)
+                      & instance?(peek-token(parser), <equals-token>))
+                pop-token(parser);
+                parse-option-value(pop-token(parser).token-value,
+                                   option.option-type)
+              else
+                #t
+              end;
   option.option-value[key] := value;
 end method parse-option;
 
