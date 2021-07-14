@@ -106,44 +106,71 @@ end function;
 //======================================================================
 
 define abstract class <command> (<object>)
-  constant slot parser-tokens :: <deque> = make(<deque>); // of: <token>
   slot command-options :: <sequence> = make(<stretchy-vector>),
     init-keyword: options:;
   constant slot %command-help :: <string>,
     required-init-keyword: help:;
+  // Subcommands may be arbitrarily nested.
+  slot command-subcommands :: <sequence> = #[],
+    init-keyword: subcommands:;
+  slot selected-subcommand :: false-or(<subcommand>) = #f;
 end class;
 
-define method initialize (cmd :: <command>, #key) => ()
+// The --help option is added by default but we provide a way to turn it off here.
+define method initialize
+    (cmd :: <command>, #key help-option? :: <boolean> = #t, #all-keys)
+ => ()
+  if (help-option?)
+    add-help-option(cmd);
+  end;
   next-method();
-  validate-options(cmd.command-options);
+  validate-options(cmd);
 end method;
 
-define function validate-options (options :: <sequence>)
+define open abstract class <subcommand> (<command>)
+  constant slot subcommand-name :: <string>,
+    required-init-keyword: name:;
+end class;
+
+define method debug-name
+    (subcmd :: <subcommand>) => (name :: <string>)
+  subcmd.subcommand-name
+end method;
+
+define function validate-options
+    (cmd :: <command>) => ()
+  let description = if (instance?(cmd, <subcommand>))
+                      format-to-string("Subcommand %=", cmd.subcommand-name)
+                    else
+                      "Command"
+                    end;
+  if (cmd.has-subcommands? & cmd.positional-options.size > 0)
+    parser-error("%s has both subcommands and positional options", description);
+  end;
   // Don't care if positionals are mixed in with pass-by-names because
   // positional-options will extract them in order.
   let names = make(<stretchy-vector>);
   let repeated-positional = #f;
   let optional-positional = #f;
-  for (option in options)
+  for (option in cmd.command-options)
     for (name in option.option-names)
       if (member?(name, names, test: \=))
-        parser-error("Duplicate option name: %=", name);
+        parser-error("%s has duplicate option name: %=", description, name);
       end;
       add!(names, name);
     end;
     if (repeated-positional)
-      parser-error("only one repeated positional option (currently %=) is"
-                     " allowed and it must be the last option",
-                   repeated-positional.canonical-name);
+      parser-error("%s has options following repeated positional option %=",
+                   description, repeated-positional.canonical-name);
     end;
     if (instance?(option, <positional-option>))
       if (option.option-repeated?)
         repeated-positional := option;
       end;
       if (option.option-required? & optional-positional)
-        parser-error("required positional option %= may not follow"
+        parser-error("%s has required positional option %= following"
                        " optional positional option %=",
-                     option.canonical-name,
+                     description, option.canonical-name,
                      optional-positional.canonical-name);
       end;
       if (~option.option-required?)
@@ -167,17 +194,63 @@ define function pass-by-name-options
          cmd.command-options)
 end function;
 
-define open abstract class <subcommand> (<command>)
-  constant slot subcommand-name :: <string>,
-    required-init-keyword: name:;
-end class;
+define function has-subcommands?
+    (cmd :: <command>) => (_ :: <boolean>)
+  cmd.command-subcommands.size > 0
+end;
 
-define method debug-name
-    (subcmd :: <subcommand>) => (name :: <string>)
-  subcmd.subcommand-name
+define generic find-subcommand
+    (cmd :: <command>, object)
+ => (subcommand :: false-or(<subcommand>));
+
+define method find-subcommand
+    (cmd :: <command>, class :: subclass(<subcommand>))
+ => (subcommand :: false-or(<subcommand>))
+  let subs = cmd.command-subcommands;
+  let key = find-key(subs, rcurry(instance?, class));
+  key & subs[key]
 end method;
 
-// Should this just be another method on execute-command instead?
+define method find-subcommand
+    (cmd :: <command>, name :: <string>)
+ => (subcommand :: false-or(<subcommand>))
+  let subs = cmd.command-subcommands;
+  let key = find-key(subs, method (subcmd)
+                             name = subcmd.subcommand-name
+                           end);
+  key & subs[key]
+end method;
+
+define method find-subcommand
+    (cmd :: <command>, path :: <sequence>)
+ => (subcommand :: false-or(<subcommand>))
+  iterate loop (cmd = cmd, i = 0)
+    if (i >= path.size)
+      cmd
+    else
+      let subs = cmd.command-subcommands;
+      let name = path[i];
+      let k = find-key(subs, method (subcmd)
+                               name = subcmd.subcommand-name
+                             end);
+      k & loop(subs[k], i + 1)
+    end
+  end
+end method;
+
+define function add-subcommand
+    (cmd :: <command>, subcmd :: <subcommand>) => ()
+  let name = subcommand-name(subcmd);
+  if (cmd.positional-options.size > 0)
+    parser-error("a command may not have both positional"
+                   " options and subcommands");
+  end;
+  if (find-subcommand(cmd, name))
+    parser-error("a subcommand named %= already exists", name);
+  end;
+  cmd.command-subcommands := add!(cmd.command-subcommands, subcmd);
+end function;
+
 define open generic execute-subcommand
     (parser :: <command-line-parser>, subcmd :: <object>)
  => (status :: false-or(<integer>));
@@ -189,68 +262,37 @@ define method execute-subcommand
         subcmd);
 end method;
 
+// A <command-line-parser> is just a top-level command that handles the overall command
+// line processing.
 define open class <command-line-parser> (<command>)
-  slot parser-subcommands :: <sequence> = #[],
-    init-keyword: subcommands:;
-  slot selected-subcommand :: false-or(<subcommand>) = #f;
+  constant slot parser-tokens :: <deque> = make(<deque>); // of: <token>
 end class;
 
-// Help options are on by default but may be turned off.
 define method initialize
-    (parser :: <command-line-parser>,
-     #key help-option? :: <boolean> = #t,
-          help-subcommand? :: <boolean> = #t, #all-keys) => ()
+    (cmd :: <command-line-parser>, #key help-subcommand? :: <boolean> = #t, #all-keys)
+ => ()
   next-method();
-  if (help-option?)
-    add-help-option(parser);
-  end;
-  if (help-subcommand? & parser.has-subcommands?)
-    add-help-subcommand(parser);
+  // A "help" subcommand is added only if there are other subcommands since adding
+  // subcommands changes the way the overall command is parsed.
+  //
+  // TODO(cgay): This isn't called if someone uses the pattern
+  //   let cmd = make(<command-line-parser>, ...no subcommands: argument...);
+  //   add-subcommand(cmd, subcmd);
+  // So for now if you use that pattern you have to add the help subcommand manually.
+  // I don't like that it means there's a different level of knowledge necessary for
+  // that pattern. We could stash away the value of `help-subcommand?` here and use
+  // it later if add-subcommand is called. I want to see how the new macros look before
+  // deciding how to handle this though.
+  if (help-subcommand? & cmd.has-subcommands?)
+    add-help-subcommand(cmd);
   end;
 end method;
 
-define function has-subcommands?
-    (parser :: <command-line-parser>) => (_ :: <boolean>)
-  parser.parser-subcommands.size > 0
-end;
-
-define generic find-subcommand
-    (parser :: <command-line-parser>, object)
- => (subcommand :: false-or(<subcommand>));
-
-define method find-subcommand
-    (parser :: <command-line-parser>, class :: subclass(<subcommand>))
- => (subcommand :: false-or(<subcommand>))
-  let subs = parser.parser-subcommands;
-  let key = find-key(subs, rcurry(instance?, class));
-  key & subs[key]
-end method;
-
-define method find-subcommand
-    (parser :: <command-line-parser>, name :: <string>)
- => (subcommand :: false-or(<subcommand>))
-  let subs = parser.parser-subcommands;
-  let key = find-key(subs, method (subcmd)
-                             name = subcmd.subcommand-name
-                           end);
-  key & subs[key]
-end method;
-
-define function add-subcommand
-    (parser :: <command-line-parser>, subcmd :: <subcommand>) => ()
-  let name = subcommand-name(subcmd);
-  if (parser.positional-options.size > 0)
-    parser-error("a command line parser may not have both positional"
-                   " options and subcommands");
-  end;
-  if (find-subcommand(parser, name))
-    parser-error("a subcommand named %= already exists", name);
-  end;
-  parser.parser-subcommands := add!(parser.parser-subcommands, subcmd);
-end function;
-
+// This wasn't really well thought out. It's only useful to call if you have subcommands
+// and each one has its own subclass.
 define generic execute-command
-    (parser :: <command-line-parser>) => (status :: false-or(<integer>));
+    (parser :: <command-line-parser>)
+ => (status :: false-or(<integer>));
 
 define method execute-command
     (parser :: <command-line-parser>) => (status :: false-or(<integer>))
@@ -272,9 +314,8 @@ define generic add-option (cmd :: <command>, option :: <option>) => ();
 
 define method add-option
     (cmd :: <command>, option :: <option>) => ()
-  let new-options = add(cmd.command-options, option);
-  validate-options(new-options);
-  cmd.command-options := new-options;
+  cmd.command-options := add(cmd.command-options, option);
+  validate-options(cmd);
 end method;
 
 define generic find-option
@@ -309,21 +350,21 @@ define function get-option-value
 end function;
 
 define function add-argument-token
-    (parser :: <command>, class :: <class>, value :: <string>,
+    (parser :: <command-line-parser>, class :: <class>, value :: <string>,
      #rest keys, #key, #all-keys)
  => ()
   push-last(parser.parser-tokens, apply(make, class, value: value, keys));
 end;
 
 define function tokens-remaining?
-    (parser :: <command>) => (remaining? :: <boolean>)
+    (parser :: <command-line-parser>) => (remaining? :: <boolean>)
   ~parser.parser-tokens.empty?
 end;
 
 // TODO(cgay): This says it returns false-or, but it doesn't. I think it would be an
 // improvement to make it do that and get rid of tokens-remaining?.
 define function peek-token
-    (parser :: <command>) => (token :: false-or(<token>))
+    (parser :: <command-line-parser>) => (token :: false-or(<token>))
   unless (tokens-remaining?(parser))
     usage-error("Ran out of arguments.")
   end;
@@ -331,7 +372,7 @@ define function peek-token
 end;
 
 define function pop-token
-    (parser :: <command>) => (token :: false-or(<token>))
+    (parser :: <command-line-parser>) => (token :: false-or(<token>))
   unless (tokens-remaining?(parser))
     usage-error("Ran out of arguments.")
   end;
@@ -408,6 +449,9 @@ define method initialize
   let type = option.option-type;
   if (default)
     if (option.option-repeated?)
+      // TODO(cgay): Verify that each element of the default value can be converted to an
+      // instance of the option's type via parse-option-value. (I forget whether the
+      // default is normally converted to the type: or not....)
       type := <collection>
     end;
     if (~instance?(default, type))
@@ -675,7 +719,7 @@ define method parse-command-line
   let (clean-args, extra-args) = split-args(args);
   let chopped-args = chop-args(clean-args);
   tokenize-args(parser, chopped-args);
-  process-tokens(parser, #f);
+  process-tokens(program-name(), parser, #f);
 
   if (~empty?(extra-args))
     // Append any more positional options from after the '--'.  If there's a
@@ -702,17 +746,26 @@ end method;
 define open generic parse-option
     (option :: <option>, args :: <command>) => ();
 
-// Process the tokens, side-effecting the <command>, the <subcommand> (if any),
-// and the <option>s. If a subcommand is encountered, the remaining tokens are
-// passed to it and this is called recursively.
+// Process the tokens, side-effecting the <command>, the <subcommand>s (if any), and the
+// <option>s. If a subcommand is encountered, the remaining tokens are passed to it and
+// this is called recursively. Only the last (sub)command may have positional args.
 //
 // One bit of subtlety here (which would be cleaned up by separating the parser
 // from the command descriptions) is that the full tokenized command line is
 // stored in the <command-line-parser> while some of the options may be stored
 // in a <subcommand>.
 define function process-tokens
-    (parser :: <command-line-parser>, subcmd :: false-or(<subcommand>))
-  let pos-opts = as(<list>, (subcmd | parser).positional-options);
+    (name :: <string>, parser :: <command-line-parser>, subcmd :: false-or(<subcommand>))
+  let cmd = subcmd | parser;
+  let pos-opts = as(<list>, cmd.positional-options);
+  if (~empty?(pos-opts) & cmd.has-subcommands?)
+    // TODO(cgay): move this to validate-options or equivalent so that it happens at
+    // instantiation time.
+    usage-error("The %= %s has subcommands so it may not have its own positional"
+                  " arguments.",
+                name,
+                if (instance?(cmd, <subcommand>)) "subcommand" else "command" end);
+  end;
   while (tokens-remaining?(parser))
     let token = peek-token(parser);
     let value = token.token-value;
@@ -720,35 +773,37 @@ define function process-tokens
       <argument-token> =>
         // Got an argument token without a preceding <short/long-option-token>
         // so it must be a subcommand or a positional argument.
-        if (~subcmd & parser.has-subcommands?)
-          let sub = find-subcommand(parser, value)
+        if (cmd.has-subcommands?)
+          let sub = find-subcommand(cmd, value)
             | usage-error("%= does not name a subcommand.", value);
           pop-token(parser);
+          // Store the selected subcommand in the parent subcommand, and the top-level
+          // parser always receives the final subcommand.
+          cmd.selected-subcommand := sub;
           parser.selected-subcommand := sub;
-          //subcommand.parser-tokens := parser.parser-tokens;
-          process-tokens(parser, sub);
+          process-tokens(sub.subcommand-name, parser, sub);
         else
           if (empty?(pos-opts))
             usage-error("Too many positional arguments: %=", value);
           end;
           let option = head(pos-opts);
           if (option.option-repeated?)
-            assert(pos-opts.size = 1);
+            assert(pos-opts.size = 1); // Repeated option must be last option.
           else
             pos-opts := tail(pos-opts);
           end;
-          parse-option(option, parser);
+          parse-option(option, parser); // Parser contains the unprocessed tokens.
           option.option-present? := #t;
         end;
       <short-option-token>, <long-option-token> =>
-        let option = find-option(subcmd | parser, value)
+        let option = find-option(cmd, value)
           | usage-error("Unrecognized option: %s%s",
                         if (value.size = 1) "-" else "--" end,
                         value);
         if (instance?(option, <help-option>))
           // Handle --help early in case the remainder of the command line is
           // invalid or there are missing required arguments.
-          print-help(parser, subcmd);
+          print-help(cmd);
           abort-command(0);
         end;
         parse-option(option, parser);

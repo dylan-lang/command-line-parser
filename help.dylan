@@ -33,6 +33,7 @@ define function add-help-subcommand
                       options: list(make(<positional-option>,
                                          name: "subcommand",
                                          required?: #f,
+                                         repeated?: #t,
                                          help: "A subcommand name."))))
 end function;
 
@@ -71,12 +72,12 @@ define method execute-subcommand
   if (name)
     let subcmd = find-subcommand(parser, name);
     if (subcmd)
-      print-help(parser, subcmd);
+      print-help(subcmd);
     else
-      usage-error("Subcommand %= not found.", name);
+      usage-error("Subcommand %= not found.", join(name, " "));
     end;
   else
-    print-help(parser, #f);     // 'app help' same as 'app --help'
+    print-help(parser);         // 'app help' same as 'app --help'
   end;
 end method;
 
@@ -87,7 +88,7 @@ end;
 
 // make open generic?
 define function add-help-option
-    (parser :: <command-line-parser>) => ()
+    (parser :: <command>) => ()
   add-option(parser, make(<help-option>,
                           names: #("help", "h"),
                           help: "Display this message."));
@@ -149,61 +150,47 @@ define method format-option-usage
   option.canonical-option-name
 end;
 
-define open generic print-help
-    (parser :: <command-line-parser>, subcmd :: false-or(<subcommand>), #key stream);
-
-define method print-help
-    (parser :: <command-line-parser>, subcmd == #f,
-     #key stream :: <stream> = *standard-output*)
-  format(stream, "%s\n", parser.command-help);
-  format(stream, "\n%s\n", generate-usage(parser));
-  print-options(stream, parser,
-                if (empty?(parser-subcommands(parser)))
-                  "Options:"
-                else
-                  "Global options:"
-                end);
-  if (~empty?(parser-subcommands(parser)))
+define function print-help
+    (cmd :: <command>, #key stream :: <stream> = *standard-output*)
+  format(stream, "%s\n", command-help(cmd));
+  format(stream, "\n%s\n", generate-usage(cmd));
+  print-options(cmd, stream);
+  if (cmd.has-subcommands?)
     format(stream, "\nSubcommands:\n");
-    let (names, docs) = subcommand-columns(parser);
+    let (names, docs) = subcommand-columns(cmd);
     if (~empty?(names))
       let name-width = reduce1(max, map(size, names));
       for (name in names, doc in docs)
         format(stream, "%s  %s\n", pad-right(name, name-width), doc);
       end;
     end;
-    let help-subcommand = find-subcommand(parser, <help-subcommand>);
+    format(stream, "\n");
+    let help-subcommand = find-subcommand(cmd, <help-subcommand>);
     if (help-subcommand)
-      format(stream, "\nUse '%s %s <subcommand>' to see subcommand options.\n",
+      format(stream, "Use '%s %s <cmd> [<cmd> ...]' to see subcommand options.\n",
              program-name(), subcommand-name(help-subcommand));
     end;
   end;
-end method;
-
-define method print-help
-    (parser :: <command-line-parser>, subcmd :: <subcommand>,
-     #key stream :: <stream> = *standard-output*)
-  format(stream, "%s\n", subcmd.command-help);
-  format(stream, "\n%s\n", generate-usage(subcmd));
-  print-options(stream, subcmd, "Options:");
-  let help-option = find-option(parser, <help-option>);
-  if (help-option)
-    format(stream, "\nUse '%s %s' to see global options.\n",
-           program-name(), help-option.canonical-name.visible-option-name);
+  if (~instance?(cmd, <command-line-parser>))
+    let help-option = find-option(cmd, <help-option>);
+    if (help-option)
+      format(stream, "Use '%s %s' to see global options.\n",
+             program-name(), help-option.canonical-name.visible-option-name);
+    end;
   end;
-end method;
+end function;
 
-define method print-options
-    (stream :: <stream>, command :: <command>, header :: <string>) => ()
-  let (names, docs) = option-columns(command);
+define function print-options
+    (cmd :: <command>, stream :: <stream>) => ()
+  let (names, docs) = option-columns(cmd);
   if (~empty?(names))
-    format(stream, "\n%s\n", header);
+    format(stream, "\nOptions:\n");
     let name-width = reduce1(max, map(size, names));
     for (name in names, doc in docs)
       format(stream, "  %s  %s\n", pad-right(name, name-width), doc);
     end;
   end;
-  let (names, docs) = positional-columns(command);
+  let (names, docs) = positional-columns(cmd);
   if (~empty?(names))
     format(stream, "\nPositional arguments:\n");
     let name-width = reduce1(max, map(size, names));
@@ -211,7 +198,7 @@ define method print-options
       format(stream, "  %s  %s\n", pad-right(name, name-width), doc);
     end;
   end;
-end method;
+end function;
 
 define function positional-columns
     (cmd :: <command>) => (names :: <sequence>, docs :: <sequence>)
@@ -256,17 +243,24 @@ define function option-columns
   values(names, docs)
 end function;
 
-// There is much work to be done to make this better.
 define function subcommand-columns
-    (parser :: <command-line-parser>)
+    (cmd :: <command>)
  => (names :: <sequence>, docs :: <sequence>)
   let names = make(<stretchy-vector>);
   let docs = make(<stretchy-vector>);
-  for (subcmd in parser.parser-subcommands)
-    add!(names, concatenate("  ", subcmd.subcommand-name));
-    // TODO(cgay): Wrap doc text.
-    add!(docs, subcmd.command-help);
-  end for;
+  iterate loop (subs = as(<list>, cmd.command-subcommands), indent = "  ")
+    if (~empty?(subs))
+      let subcmd = subs[0];
+      add!(names, concatenate(indent, subcmd.subcommand-name));
+      // TODO(cgay): Wrap doc text.
+      add!(docs, subcmd.command-help);
+      if (subcmd.has-subcommands?)
+        loop(subcmd.command-subcommands, concatenate(indent, "  "));
+      else
+        loop(tail(subs), indent)
+      end;
+    end;
+  end iterate;
   values(names, docs)
 end function;
 
@@ -281,10 +275,10 @@ define method generate-usage
     let subs? = cmd.has-subcommands?;
     format(stream, "Usage: %s", program-name());
     if (cmd.pass-by-name-options.size > 0)
-      format(stream, " [%soptions]", if (subs?) "global " else "" end);
+      format(stream, " [options]");
     end;
     if (subs?)
-      format(stream, " <subcommand> [sub options] args...")
+      format(stream, " <cmd> [cmd options] args...")
     end;
     print-positional-args(stream, cmd);
   end
