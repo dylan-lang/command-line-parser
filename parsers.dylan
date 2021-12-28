@@ -51,7 +51,7 @@ define method negative-option?
 end;
 
 define method parse-option
-    (option :: <flag-option>, parser :: <command>)
+    (option :: <flag-option>, parser :: <command-line-parser>)
  => ()
   let token = pop-token(parser);
   option.option-value := ~negative-option?(option, token);

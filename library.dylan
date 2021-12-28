@@ -77,9 +77,10 @@ define module command-line-parser
   export
     <subcommand>,               // Subclass this for each subcommand...
     <help-subcommand>,          // ...except use this for the help subcommand.
+    add-subcommand,
     execute-subcommand;         // Override this for each subcommand.
 
-  // Option classes
+  // Options
   export
     <option>,
     <flag-option>,               // --opt or --opt=yes/no
