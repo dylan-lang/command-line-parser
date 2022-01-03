@@ -102,6 +102,9 @@ define test test-keyed-option ()
 end test;
 
 define test test-repeated-parameter-option ()
+  let command = parse-one(make(<repeated-parameter-option>, name: "r", help: "help"),
+                          #["-r", "a"]);
+  assert-equal(as(<deque>, #["a"]), get-option-value(command, "r"));
 end;
 
 define test test-optional-parameter-option ()
