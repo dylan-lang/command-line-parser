@@ -1,0 +1,10 @@
+{
+    "category": "utilities",
+    "contact": "dylan-lang@googlegroups.com",
+    "deps": ["strings@1.0"],
+    "description": "Command line processing",
+    "keywords": ["cli", "flags"],
+    "name": "command-line-parser",
+    "version": "3.1.0",
+    "url": "https://github.com/dylan-lang/command-line-parser"
+}
