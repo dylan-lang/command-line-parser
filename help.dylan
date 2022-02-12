@@ -256,9 +256,8 @@ define function subcommand-columns
       add!(docs, subcmd.command-help);
       if (subcmd.has-subcommands?)
         loop(subcmd.command-subcommands, concatenate(indent, "  "));
-      else
-        loop(tail(subs), indent)
       end;
+      loop(tail(subs), indent)
     end;
   end iterate;
   values(names, docs)
