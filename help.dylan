@@ -161,7 +161,11 @@ define function print-help
     if (~empty?(names))
       let name-width = reduce1(max, map(size, names));
       for (name in names, doc in docs)
-        format(stream, "%s  %s\n", pad-right(name, name-width), doc);
+        if (empty?(doc))
+          format(stream, "%s\n", name);
+        else
+          format(stream, "%s  %s\n", pad-right(name, name-width), doc);
+        end;
       end;
     end;
     format(stream, "\n");
@@ -256,9 +260,8 @@ define function subcommand-columns
       add!(docs, subcmd.command-help);
       if (subcmd.has-subcommands?)
         loop(subcmd.command-subcommands, concatenate(indent, "  "));
-      else
-        loop(tail(subs), indent)
       end;
+      loop(tail(subs), indent)
     end;
   end iterate;
   values(names, docs)
