@@ -18,7 +18,7 @@ jobs:
       # Not using dylan-tool and packages here yet because of a circular
       # dependency between testworks and command-line-parser.
       # https://github.com/dylan-lang/pacman/issues/17
-      - uses: dylan-lang/install-opendylan@v1
+      - uses: dylan-lang/install-opendylan@v2
 
       - name: Build command-line-parser-test-suite-app
         run: ./dylan-compiler -build -jobs 3 command-line-parser-test-suite-app
