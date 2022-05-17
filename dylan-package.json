@@ -1,16 +1,15 @@
 {
     "name": "command-line-parser",
     "description": "Parse command line flags and subcommands",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "url": "https://github.com/dylan-lang/command-line-parser",
     "category": "utilities",
     "contact": "dylan-lang@googlegroups.com",
     "keywords": ["cli", "flags"],
-    "deps": [
+    "dependencies": [
         "strings@1.0"
-        # Testworks depends on command-line-parser so we can't depend on it here.
-        # Instead, we rely on it being picked up from the Open Dylan submodule.
-        # https://github.com/dylan-lang/pacman/issues/17
-        # "testworks@2.0"
+    ],
+    "dev-dependencies": [
+        "testworks@2.0"
     ]
 }
