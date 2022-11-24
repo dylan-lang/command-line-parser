@@ -306,6 +306,7 @@ define method execute-command
       format(*standard-error*, " Use '%s %s' to see a list of subcommands.",
              program-name(), help.subcommand-name);
     end;
+    format(*standard-error*, "\n");
     2                           // usage error
   end
 end method;
