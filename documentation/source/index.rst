@@ -1,12 +1,11 @@
-*******************************
-The command-line-parser Library
-*******************************
+*******************
+command-line-parser
+*******************
 
 .. current-library:: command-line-parser
 .. current-module:: command-line-parser
 
-.. contents::  Contents
-   :local:
+.. toctree::
 
 
 The *command-line-parser* library provides a facility to parse the
@@ -151,8 +150,8 @@ Reference
 =========
 
 
-The command-line-parser Module
-------------------------------
+Module: command-line-parser
+---------------------------
 
 .. class:: <command>
    :abstract:
@@ -714,8 +713,8 @@ Option Classes
       of the default one.
 
 
-The option-parser-protocol Module
----------------------------------
+Module: option-parser-protocol
+------------------------------
 
 This module exports an API that can be used to extend the existing command line
 parser without modifying the source in this library.  It shouldn't be common to
