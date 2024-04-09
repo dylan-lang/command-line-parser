@@ -16,3 +16,6 @@ extensions = [
     'dylan.domain',
     'sphinx.ext.intersphinx'
 ]
+
+# Ignore certification verification
+tls_verify = False
