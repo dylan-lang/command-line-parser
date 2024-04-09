@@ -15,13 +15,16 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      # Not using dylan-tool and packages here yet because of a circular
-      # dependency between testworks and command-line-parser.
-      # https://github.com/dylan-lang/pacman/issues/17
-      - uses: dylan-lang/install-opendylan@v2
+
+      - uses: actions/checkout@v4
+
+      - uses: dylan-lang/install-opendylan@v3
+
+      - name: Update dependencies
+        run: dylan update
 
       - name: Build command-line-parser-test-suite-app
-        run: ./dylan-compiler -build -jobs 3 command-line-parser-test-suite-app
+        run: dylan build command-line-parser-test-suite-app
 
       - name: Run command-line-parser-test-suite-app
         run: _build/bin/command-line-parser-test-suite-app
