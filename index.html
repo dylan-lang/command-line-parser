@@ -1,14 +1,14 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2024.01.29 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
         <title>command-line-parser</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
     
     
@@ -68,7 +68,7 @@
   <symbol id="svg-sun" viewBox="0 0 24 24">
     <title>Light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
       <circle cx="12" cy="12" r="5"></circle>
       <line x1="12" y1="1" x2="12" y2="3"></line>
       <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -83,7 +83,7 @@
   <symbol id="svg-moon" viewBox="0 0 24 24">
     <title>Dark mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
@@ -91,7 +91,7 @@
   <symbol id="svg-sun-half" viewBox="0 0 24 24">
     <title>Auto light/dark mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
       <circle cx="12" cy="12" r="9" />
       <path d="M13 12h5" />
@@ -99,6 +99,60 @@
       <path d="M13 18h1" />
       <path d="M13 9h4" />
       <path d="M13 6h1" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" /
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
 </svg>
@@ -111,6 +165,8 @@
 <label class="overlay toc-overlay" for="__toc">
   <div class="visually-hidden">Hide table of contents sidebar</div>
 </label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
 
 
@@ -129,7 +185,8 @@
       <div class="theme-toggle-container theme-toggle-header">
         <button class="theme-toggle">
           <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
-          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
@@ -172,11 +229,17 @@
           <span>Back to top</span>
         </a>
         <div class="content-icon-container">
-          
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/index.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
 <div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
-              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
@@ -186,9 +249,9 @@
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
-        <article role="main">
+        <article role="main" id="furo-main-content">
           <section id="command-line-parser">
-<h1>command-line-parser<a class="headerlink" href="#command-line-parser" title="Permalink to this heading">#</a></h1>
+<h1>command-line-parser<a class="headerlink" href="#command-line-parser" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 <p>The <em>command-line-parser</em> library provides a facility to parse the
@@ -198,7 +261,7 @@ command line.  It exports two modules:</p>
 <li><p><em>option-parser-protocol</em> - For extending the API</p></li>
 </ul>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>Here’s a quick list of features to get a sense of what’s available:</p>
 <ul class="simple">
 <li><p>Various option types</p>
@@ -225,7 +288,7 @@ or create entirely new option types.</p></li>
 </ul>
 </section>
 <section id="quick-start">
-<h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this heading">#</a></h2>
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
 <p>The best way to build a command line parser is with
 <code class="xref dylan dylan-macro docutils literal notranslate"><span class="pre">command-line-definer</span></code>, since it is far more concise and readable than
 building one “by hand” with <code class="docutils literal notranslate"><span class="pre">make(&lt;command-line-parser&gt;,</span> <span class="pre">options:</span> <span class="pre">...)</span></code>.  It
@@ -321,12 +384,12 @@ values by calling <code class="docutils literal notranslate"><span class="pre">g
 </div>
 </section>
 <section id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading">#</a></h2>
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
 <section id="module-command-line-parser">
-<h3>Module: command-line-parser<a class="headerlink" href="#module-command-line-parser" title="Permalink to this heading">#</a></h3>
+<h3>Module: command-line-parser<a class="headerlink" href="#module-command-line-parser" title="Link to this heading">¶</a></h3>
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[command]">
-<span class="sig-name descname"><span class="pre">&lt;command&gt;</span></span> <em class="property"><span class="pre">Abstract</span> <span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[command]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;command&gt;</span></span> <em class="property"><span class="pre">Abstract</span> <span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[command]" title="Link to this definition">¶</a></dt>
 <dd><p>Abstract superclass of <a class="reference internal" href="#command-line-parser:command-line-parser:[command-line-parser]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;command-line-parser&gt;</span></code></a> and
 <a class="reference internal" href="#command-line-parser:command-line-parser:[subcommand]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;subcommand&gt;</span></code></a>.</p>
 <dl class="field-list simple">
@@ -345,7 +408,7 @@ there may be only a single <a class="reference internal" href="#command-line-par
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[subcommand]">
-<span class="sig-name descname"><span class="pre">&lt;subcommand&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Abstract</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[subcommand]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;subcommand&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Abstract</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[subcommand]" title="Link to this definition">¶</a></dt>
 <dd><p>A named subcommand. Subcommands have their own set of command-line
 options. They may not contain other subcommands.</p>
 <dl class="field-list simple">
@@ -366,7 +429,7 @@ options. They may not contain other subcommands.</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[command-line-parser]">
-<span class="sig-name descname"><span class="pre">&lt;command-line-parser&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[command-line-parser]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;command-line-parser&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[command-line-parser]" title="Link to this definition">¶</a></dt>
 <dd><p>Encapsulates a set of command-line options. May optionally contain a set of
 subcommands, each of which has its own set of options.</p>
 <dl class="field-list simple">
@@ -392,7 +455,7 @@ else (e.g., non-English). See <a class="reference internal" href="#command-line-
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[help-subcommand]">
-<span class="sig-name descname"><span class="pre">&lt;help-subcommand&gt;</span></span> <em class="property"><span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[help-subcommand]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;help-subcommand&gt;</span></span> <em class="property"><span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[help-subcommand]" title="Link to this definition">¶</a></dt>
 <dd><p>Implements the <code class="docutils literal notranslate"><span class="pre">help</span></code> subcommand. Normally there is no need to use this
 since the command line parser implements the <code class="docutils literal notranslate"><span class="pre">help</span></code> subcommand itself.
 However, if you wanted to implement the <code class="docutils literal notranslate"><span class="pre">help</span></code> subcommand differently, or
@@ -416,7 +479,7 @@ just give it a different (or an additional) name, this is how to do it:</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[command-line-parser-error]">
-<span class="sig-name descname"><span class="pre">&lt;command-line-parser-error&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[command-line-parser-error]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;command-line-parser-error&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[command-line-parser-error]" title="Link to this definition">¶</a></dt>
 <dd><p>Superclass of all errors signaled by this library.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -427,7 +490,7 @@ just give it a different (or an additional) name, this is how to do it:</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[abort-command-error]">
-<span class="sig-name descname"><span class="pre">&lt;abort-command-error&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[abort-command-error]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;abort-command-error&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[abort-command-error]" title="Link to this definition">¶</a></dt>
 <dd><p>Provides a standard way for program code to indicate that the application
 should exit. Signaled by the command line parser itself after the standard
 <code class="docutils literal notranslate"><span class="pre">--help</span></code> option or <code class="docutils literal notranslate"><span class="pre">help</span></code> subcommand have completed, so programs should
@@ -451,7 +514,7 @@ after printing the error.</p>
 
 <dl class="dylan function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:exit-status">
-<span class="sig-name descname"><span class="pre">exit-status</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:exit-status" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">exit-status</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:exit-status" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the exit status associated with an error.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -469,7 +532,7 @@ after printing the error.</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[usage-error]">
-<span class="sig-name descname"><span class="pre">&lt;usage-error&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[usage-error]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;usage-error&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[usage-error]" title="Link to this definition">¶</a></dt>
 <dd><p>Signaled when a command-line cannot be parsed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -485,7 +548,7 @@ handles <a class="reference internal" href="#command-line-parser:command-line-pa
 
 <dl class="dylan function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:add-option">
-<span class="sig-name descname"><span class="pre">add-option</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:add-option" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">add-option</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:add-option" title="Link to this definition">¶</a></dt>
 <dd><p>Add an option to a command-line parser.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Signature<span class="colon">:</span></dt>
@@ -506,7 +569,7 @@ options then <a class="reference internal" href="#command-line-parser:command-li
 
 <dl class="dylan function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:parse-command-line">
-<span class="sig-name descname"><span class="pre">parse-command-line</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:parse-command-line" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">parse-command-line</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:parse-command-line" title="Link to this definition">¶</a></dt>
 <dd><p>Parses the command line in <code class="docutils literal notranslate"><span class="pre">argv</span></code> and side-effects <code class="docutils literal notranslate"><span class="pre">parser</span></code>
 accordingly.</p>
 <dl class="field-list simple">
@@ -535,7 +598,7 @@ condition.</p>
 
 <dl class="dylan generic-function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:execute-command">
-<span class="sig-name descname"><span class="pre">execute-command</span></span> <em class="property"><span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:execute-command" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">execute-command</span></span> <em class="property"><span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:execute-command" title="Link to this definition">¶</a></dt>
 <dd><p>When using subcommands, call this to execute the parsed command line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Signature<span class="colon">:</span></dt>
@@ -558,7 +621,7 @@ it. The <code class="docutils literal notranslate"><span class="pre">help</span>
 
 <dl class="dylan generic-function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:execute-subcommand">
-<span class="sig-name descname"><span class="pre">execute-subcommand</span></span> <em class="property"><span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:execute-subcommand" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">execute-subcommand</span></span> <em class="property"><span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:execute-subcommand" title="Link to this definition">¶</a></dt>
 <dd><p>Implement a method on this generic for each subclass of
 <a class="reference internal" href="#command-line-parser:command-line-parser:[subcommand]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;subcommand&gt;</span></code></a> you create.</p>
 <dl class="field-list simple">
@@ -580,7 +643,7 @@ from <code class="docutils literal notranslate"><span class="pre">subcommand</sp
 
 <dl class="dylan generic-function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:print-synopsis">
-<span class="sig-name descname"><span class="pre">print-synopsis</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:print-synopsis" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">print-synopsis</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:print-synopsis" title="Link to this definition">¶</a></dt>
 <dd><p>Display a synopsis of the command line options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Signature<span class="colon">:</span></dt>
@@ -602,7 +665,7 @@ option and <code class="docutils literal notranslate"><span class="pre">help</sp
 
 <dl class="dylan function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:option-present?">
-<span class="sig-name descname"><span class="pre">option-present?</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:option-present?" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">option-present?</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:option-present?" title="Link to this definition">¶</a></dt>
 <dd><p>Returns <a class="reference external" href="https://opendylan.org/books/drm/Other_Built-In_Objects_Defined#true"><code class="xref drm docutils literal notranslate"><span class="pre">#t</span></code></a> if this option was supplied on the command line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Signature<span class="colon">:</span></dt>
@@ -628,7 +691,7 @@ associated parser, or if the option wasn’t supplied on the command line.</p>
 
 <dl class="dylan function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:option-value">
-<span class="sig-name descname"><span class="pre">option-value</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:option-value" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">option-value</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:option-value" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the parsed value of the option supplied on the command line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Signature<span class="colon">:</span></dt>
@@ -660,7 +723,7 @@ the command line is converted to that type by a method on
 
 <dl class="dylan function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:get-option-value">
-<span class="sig-name descname"><span class="pre">get-option-value</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:get-option-value" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">get-option-value</span></span> <em class="property"><span class="pre">Function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:get-option-value" title="Link to this definition">¶</a></dt>
 <dd><p>Retrieves an option from a <a class="reference internal" href="#command-line-parser:command-line-parser:[command]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;command&gt;</span></code></a> by name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Signature<span class="colon">:</span></dt>
@@ -682,7 +745,7 @@ the command line is converted to that type by a method on
 
 <dl class="dylan generic-function">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:parse-option-value">
-<span class="sig-name descname"><span class="pre">parse-option-value</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:parse-option-value" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">parse-option-value</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Generic</span> <span class="pre">function</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:parse-option-value" title="Link to this definition">¶</a></dt>
 <dd><p>Convert a command line argument from a <a class="reference external" href="https://opendylan.org/books/drm/Collection_Classes#string"><code class="xref drm docutils literal notranslate"><span class="pre">&lt;string&gt;</span></code></a> to the
 <a class="reference internal" href="#command-line-parser:command-line-parser:[option]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;option&gt;</span></code></a> type.</p>
 <dl class="field-list simple">
@@ -728,10 +791,10 @@ without any attempt to be smart about quoting.</p>
 </dd></dl>
 
 <section id="option-classes">
-<h4>Option Classes<a class="headerlink" href="#option-classes" title="Permalink to this heading">#</a></h4>
+<h4>Option Classes<a class="headerlink" href="#option-classes" title="Link to this heading">¶</a></h4>
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[option]">
-<span class="sig-name descname"><span class="pre">&lt;option&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Abstract</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;option&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Abstract</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[option]" title="Link to this definition">¶</a></dt>
 <dd><p>Superclass of all other option types.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -803,7 +866,7 @@ specified with the <code class="docutils literal notranslate"><span class="pre">
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[flag-option]">
-<span class="sig-name descname"><span class="pre">&lt;flag-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[flag-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;flag-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[flag-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Defines a simple flag option, i.e., one that specifies a boolean value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -831,7 +894,7 @@ command.</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[parameter-option]">
-<span class="sig-name descname"><span class="pre">&lt;parameter-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[parameter-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;parameter-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[parameter-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Defines an option that requires a value be specified.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -852,7 +915,7 @@ precedence. If the option never appears, these will default to
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[optional-parameter-option]">
-<span class="sig-name descname"><span class="pre">&lt;optional-parameter-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[optional-parameter-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;optional-parameter-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[optional-parameter-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Similar to <a class="reference internal" href="#command-line-parser:command-line-parser:[parameter-option]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;parameter-option&gt;</span></code></a>, but the parameter is
 optional.</p>
 <dl class="field-list simple">
@@ -879,7 +942,7 @@ not, and the value of the parameter otherwise.</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[repeated-parameter-option]">
-<span class="sig-name descname"><span class="pre">&lt;repeated-parameter-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[repeated-parameter-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;repeated-parameter-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[repeated-parameter-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Similar to <a class="reference internal" href="#command-line-parser:command-line-parser:[parameter-option]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;parameter-option&gt;</span></code></a>, but may appear more than
 once.</p>
 <dl class="field-list simple">
@@ -900,7 +963,7 @@ appeared on the command line. It defaults to the empty deque.</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[choice-option]">
-<span class="sig-name descname"><span class="pre">&lt;choice-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[choice-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;choice-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[choice-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Similar to <a class="reference internal" href="#command-line-parser:command-line-parser:[parameter-option]"><code class="xref dylan dylan-class docutils literal notranslate"><span class="pre">&lt;parameter-option&gt;</span></code></a>, but provides a restricted
 set of values to choose from.</p>
 <dl class="field-list simple">
@@ -937,7 +1000,7 @@ comparison.</p></li>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[keyed-option]">
-<span class="sig-name descname"><span class="pre">&lt;keyed-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[keyed-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;keyed-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[keyed-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Each occurrence of this type of option defines a key =&gt; value
 mapping.</p>
 <dl class="field-list simple">
@@ -965,7 +1028,7 @@ handy lookup table.</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[positional-option]">
-<span class="sig-name descname"><span class="pre">&lt;positional-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[positional-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;positional-option&gt;</span></span> <em class="property"><span class="pre">Sealed</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[positional-option]" title="Link to this definition">¶</a></dt>
 <dd><p>Accepts an argument that is passed by possition on the command line.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -1003,7 +1066,7 @@ the command line, and one or more words after that:</p>
 
 <dl class="dylan class">
 <dt class="sig sig-object dylan-api dylan" id="command-line-parser:command-line-parser:[help-option]">
-<span class="sig-name descname"><span class="pre">&lt;help-option&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[help-option]" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">&lt;help-option&gt;</span></span> <em class="property"><span class="pre">Open</span> <span class="pre">Class</span></em><a class="headerlink" href="#command-line-parser:command-line-parser:[help-option]" title="Link to this definition">¶</a></dt>
 <dd><p>The standard <code class="docutils literal notranslate"><span class="pre">--help</span></code> option.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Superclasses<span class="colon">:</span></dt>
@@ -1019,7 +1082,7 @@ of the default one.</p>
 </section>
 </section>
 <section id="module-option-parser-protocol">
-<h3>Module: option-parser-protocol<a class="headerlink" href="#module-option-parser-protocol" title="Permalink to this heading">#</a></h3>
+<h3>Module: option-parser-protocol<a class="headerlink" href="#module-option-parser-protocol" title="Link to this heading">¶</a></h3>
 <p>This module exports an API that can be used to extend the existing command line
 parser without modifying the source in this library.  It shouldn’t be common to
 need this and it is likely to be incomplete.  See the source code for details.</p>
@@ -1086,9 +1149,9 @@ need this and it is likely to be incomplete.  See the source code for details.</
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=ccfc871c"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
-    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+</div><script src="_static/documentation_options.js?v=b4d93468"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=4e2eecee"></script>
     </body>
 </html>
