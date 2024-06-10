@@ -6,7 +6,7 @@ command-line-parser
 .. current-module:: command-line-parser
 
 .. toctree::
-
+   :hidden:
 
 The *command-line-parser* library provides a facility to parse the
 command line.  It exports two modules:
