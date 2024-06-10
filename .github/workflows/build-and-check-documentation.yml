@@ -1,7 +1,7 @@
-name: Build and deploy documentation
+name: Build and check documentation
 
 on:
-  push:
+  pull_request:
     # all branches
     paths:
       - 'documentation/**'
