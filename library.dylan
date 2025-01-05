@@ -70,6 +70,7 @@ define module command-line-parser
     parse-command-line,
     get-option-value,
     print-help,
+    unconsumed-arguments,
 
     parse-option-value;
 
