@@ -114,6 +114,8 @@ define abstract class <command> (<object>)
   slot command-subcommands :: <sequence> = #[],
     init-keyword: subcommands:;
   slot selected-subcommand :: false-or(<subcommand>) = #f;
+  // All arguments following the first "--" positional argument, if any.
+  slot unconsumed-arguments :: <sequence> = #();
 end class;
 
 // The --help option is added by default but we provide a way to turn it off here.
@@ -598,8 +600,10 @@ end;
 //======================================================================
 
 // Break up our arguments around '--' in the traditional fashion.
-define function split-args(argv)
+define function split-args (argv)
  => (clean-args :: <sequence>, extra-args :: <sequence>)
+  // TODO(cgay): A <parameter-option> "--foo --" should be valid.
+  // https://github.com/dylan-lang/command-line-parser/issues/47
   let splitter = find-key(argv, curry(\=, "--"));
   if (splitter)
     let clean-args = copy-sequence(argv, end: splitter);
@@ -710,9 +714,9 @@ define open generic parse-command-line
     (parser :: <command-line-parser>, argv :: <sequence>)
  => ();
 
-// Parse the command line, side-effecting the parser, its options, and its
-// subcommands with the parsed values. `args` is a sequence of command line
-// arguments (strings). It must not include the command name.
+// Parse the command line, side-effecting the parser, its options, and its subcommands
+// with the parsed values. `args` is a sequence of command line arguments (strings) that
+// does not include the command name.
 define method parse-command-line
     (parser :: <command-line-parser>, args :: <sequence>)
  => ()
@@ -721,24 +725,9 @@ define method parse-command-line
   let chopped-args = chop-args(clean-args);
   tokenize-args(parser, chopped-args);
   process-tokens(program-name(), parser, #f);
-
   if (~empty?(extra-args))
-    // Append any more positional options from after the '--'.  If there's a
-    // subcommand the extra args go with that.
-    // (This feels hackish. Can we handle this directly in process-tokens?)
     let command = parser.selected-subcommand | parser;
-    let option = last(command.command-options);
-    if (~(instance?(option, <positional-option>)
-            & option.option-repeated?))
-      let opts = command.positional-options;
-      usage-error("Only %d positional argument%s allowed.",
-                  opts.size,
-                  if (opts.size = 1) "" else "s" end);
-    end;
-    for (arg in extra-args)
-      option.option-value := add!(option.option-value,
-                                  parse-option-value(arg, option.option-type));
-    end for;
+    command.unconsumed-arguments := extra-args;
   end;
 end method;
 
@@ -838,7 +827,7 @@ end function;
 
   Parameterless options:
    -b, --bar, --no-bar
-     Present or absent. May have opposites; latter values override
+     Present or absent. May have opposites; later values override
      previous values.
 
   Parameter options:

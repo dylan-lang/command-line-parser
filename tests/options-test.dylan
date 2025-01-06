@@ -217,3 +217,20 @@ define test test-positional-option-parsing ()
   assert-equal("d", p4.option-value);
   assert-equal(#["e", "f"], p5.option-value);
 end test;
+
+define test test-unconsumed-arguments ()
+  let p1 = make(<positional-option>, name: "p1", help: "?", required?: #f);
+  let cmd1 = make(<command-line-parser>, help: "?", options: list(p1));
+  assert-no-errors(parse-command-line(cmd1, #["x", "--", "y", "z"]));
+  assert-equal(#["y", "z"], cmd1.unconsumed-arguments);
+  assert-no-errors(parse-command-line(cmd1, #["--", "y", "z"]));
+  assert-equal(#["y", "z"], cmd1.unconsumed-arguments);
+
+  // Same assertions but with the final positional option allowing more than one arg.
+  let p2 = make(<positional-option>, name: "p1", help: "?", required?: #f, repeated?: #t);
+  let cmd2 = make(<command-line-parser>, help: "?", options: list(p2));
+  assert-no-errors(parse-command-line(cmd2, #["x", "--", "y", "z"]));
+  assert-equal(#["y", "z"], cmd2.unconsumed-arguments);
+  assert-no-errors(parse-command-line(cmd2, #["--", "y", "z"]));
+  assert-equal(#["y", "z"], cmd2.unconsumed-arguments);
+end test;
