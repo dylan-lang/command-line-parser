@@ -1,7 +1,7 @@
 {
     "name": "command-line-parser",
     "description": "Parse command line flags and subcommands",
-    "version": "3.2.2",
+    "version": "3.3.0",
     "url": "https://github.com/dylan-lang/command-line-parser",
     "category": "utilities",
     "contact": "dylan-lang@googlegroups.com",
@@ -12,6 +12,6 @@
     ],
     "dev-dependencies": [
         "sphinx-extensions",
-        "testworks@2.0"
+        "testworks"
     ]
 }
