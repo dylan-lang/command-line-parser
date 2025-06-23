@@ -5,8 +5,6 @@ Synopsis: Implements the --help flag and help subcommand
 // TODO(cgay): Automatically display option default values. It's too easy to
 // forget to add %default% to the help string.
 
-// TODO(cgay): Wrap the descriptions nicely
-
 define function program-name () => (name :: <string>)
   locator-base(as(<file-locator>, application-name()))
 end function;
@@ -157,20 +155,14 @@ define function print-help
   print-options(cmd, stream);
   if (cmd.has-subcommands?)
     format(stream, "\nSubcommands:\n");
-    let (names, docs) = subcommand-columns(cmd);
-    if (~empty?(names))
-      let name-width = reduce1(max, map(size, names));
-      for (name in names, doc in docs)
-        if (empty?(doc))
-          format(stream, "%s\n", name);
-        else
-          format(stream, "%s  %s\n", pad-right(name, name-width), doc);
-        end;
-      end;
+    let rows = subcommand-rows(cmd);
+    if (~empty?(rows))
+      columnize(stream, $subcommand-columns, rows);
+      new-line(stream);
     end;
-    format(stream, "\n");
     let help-subcommand = find-subcommand(cmd, <help-subcommand>);
     if (help-subcommand)
+      new-line(stream);
       format(stream, "Use '%s %s <cmd> [<cmd> ...]' to see subcommand options.\n",
              program-name(), subcommand-name(help-subcommand));
     end;
@@ -178,6 +170,7 @@ define function print-help
   if (~instance?(cmd, <command-line-parser>))
     let help-option = find-option(cmd, <help-option>);
     if (help-option)
+      new-line(stream);
       format(stream, "Use '%s %s' to see global options.\n",
              program-name(), help-option.canonical-name.visible-option-name);
     end;
@@ -186,85 +179,90 @@ end function;
 
 define function print-options
     (cmd :: <command>, stream :: <stream>) => ()
-  let (names, docs) = option-columns(cmd);
-  if (~empty?(names))
+  // Column widths are chosen to have a max table width of 79 until columnist can
+  // determine the screen width.
+  let o-rows = option-rows(cmd);
+  if (~empty?(o-rows))
     format(stream, "\nOptions:\n");
-    let name-width = reduce1(max, map(size, names));
-    for (name in names, doc in docs)
-      format(stream, "  %s  %s\n", pad-right(name, name-width), doc);
-    end;
+    columnize(stream, $optional-options-columns, o-rows);
+    new-line(stream);
   end;
-  let (names, docs) = positional-columns(cmd);
-  if (~empty?(names))
+  let p-rows = positional-option-rows(cmd);
+  if (~empty?(p-rows))
     format(stream, "\nPositional arguments:\n");
-    let name-width = reduce1(max, map(size, names));
-    for (name in names, doc in docs)
-      format(stream, "  %s  %s\n", pad-right(name, name-width), doc);
-    end;
+    columnize(stream, $positional-option-columns, p-rows);
+    new-line(stream);
   end;
 end function;
 
-define function positional-columns
-    (cmd :: <command>) => (names :: <sequence>, docs :: <sequence>)
-  let names = make(<stretchy-vector>);
-  let docs = make(<stretchy-vector>);
+define constant $positional-option-columns
+  = list(make(<column>),
+         make(<column>, maximum-width: 25),
+         make(<column>, maximum-width: 50, pad?: #f));
+
+define function positional-option-rows
+    (cmd :: <command>) => (rows :: <sequence>)
+  let rows = make(<stretchy-vector>);
   for (opt in cmd.positional-options)
     let name = opt.option-variable;
     if (opt.option-repeated?)
       name := concatenate(name, "...");
     end;
-    add!(names, name);
-    add!(docs, opt.option-help);
+    add!(rows, list("", name, opt.option-help));
   end;
-  values(names, docs)
+  rows
 end function;
 
-define function option-columns
-    (parser :: <command>)
- => (names :: <sequence>, docs :: <sequence>)
-  let names = make(<stretchy-vector>);
-  let docs = make(<stretchy-vector>);
-  let any-shorts? = any?(method (opt) ~empty?(opt.short-names) end,
-                         parser.command-options);
+define constant $optional-options-columns
+  = list(make(<column>),                    // empty string, creates column border
+         make(<column>),                    // short option names
+         make(<column>, maximum-width: 25),            // long option names
+         make(<column>, maximum-width: 50, pad?: #f)); // docs
+
+// Return rows of #[short-names, long-names, documentation]
+define function option-rows
+    (parser :: <command>) => (rows :: <sequence>)
+  let rows = make(<stretchy-vector>);
   for (option in parser.pass-by-name-options)
-    let longs = map(visible-option-name, option.long-names);
-    let shorts = map(visible-option-name, option.short-names);
-    let name = concatenate(join(concatenate(shorts, longs), ", "),
-                           " ",
-                           if (instance?(option, <flag-option>))
-                             ""
-                           else
-                             option.option-variable | canonical-name(option);
-                           end);
-    let indent = if (empty?(shorts) & any-shorts?)
-                   "    "       // Makes long options align (usually).
-                 else
-                   ""
-                 end;
-    add!(names, concatenate(indent, name));
-    add!(docs, option.option-help);
+    let flag? = instance?(option, <flag-option>);
+    add!(rows,
+         vector("",             // causes a two space indent
+                join(map(visible-option-name, option.short-names), ", "),
+                join(map(method (name)
+                           concatenate(visible-option-name(name),
+                                       flag? & "" | "=",
+                                       flag? & "" | (option.option-variable
+                                                       | canonical-name(option)))
+                         end,
+                         option.long-names),
+                     " "),
+                option.option-help));
   end for;
-  values(names, docs)
+  rows
 end function;
 
-define function subcommand-columns
-    (cmd :: <command>)
- => (names :: <sequence>, docs :: <sequence>)
-  let names = make(<stretchy-vector>);
-  let docs = make(<stretchy-vector>);
-  iterate loop (subs = as(<list>, cmd.command-subcommands), indent = "  ")
+define constant $subcommand-columns
+  = list(make(<column>),        // empty string, creates column border
+         make(<column>),        // subcommand name
+         make(<column>,         // subcommand doc
+              maximum-width: 50, pad?: #f));
+
+define function subcommand-rows
+    (cmd :: <command>) => (rows :: <sequence>)
+  let rows = make(<stretchy-vector>);
+  iterate loop (subs = as(<list>, cmd.command-subcommands), indent = "")
     if (~empty?(subs))
       let subcmd = subs[0];
-      add!(names, concatenate(indent, subcmd.subcommand-name));
-      // TODO(cgay): Wrap doc text.
-      add!(docs, subcmd.command-help);
+      add!(rows, list("",
+                      concatenate(indent, subcmd.subcommand-name),
+                      subcmd.command-help));
       if (subcmd.has-subcommands?)
         loop(subcmd.command-subcommands, concatenate(indent, "  "));
       end;
       loop(tail(subs), indent)
     end;
   end iterate;
-  values(names, docs)
+  rows
 end function;
 
 // Generate a one-line usage message showing the order of options and arguments.

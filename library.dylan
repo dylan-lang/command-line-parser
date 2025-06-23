@@ -3,6 +3,7 @@ author:  Eric Kidd
 copyright: See LICENSE file in this distribution.
 
 define library command-line-parser
+  use columnist;
   use common-dylan;
   use dylan,
     import: { dylan-extensions };
@@ -52,6 +53,7 @@ end module option-parser-protocol;
 
 // Used by most programs.
 define module command-line-parser
+  use columnist;
   use common-dylan,
     exclude: { format-to-string };
   use dylan-extensions,

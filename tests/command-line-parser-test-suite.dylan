@@ -96,13 +96,13 @@ define test test-synopsis-format ()
 Usage: %s [options]
 
 Options:
-  -h, --help                   Display this message.
-  -v, -q, --verbose, --quiet   Be more or less verbose.
-  -f, -B, --foo, --no-foo      Be more or less foonly.
-  -Q, --quux QUUX              Quuxly quacksly
-  -O, --optimize LEVEL         x
-  -W, --warning WARNING        x
-  -D, --define DEFINE          x
+  -h      --help             Display this message.
+  -v, -q  --verbose --quiet  Be more or less verbose.
+  -f, -B  --foo --no-foo     Be more or less foonly.
+  -Q      --quux=QUUX        Quuxly quacksly
+  -O      --optimize=LEVEL   x
+  -W      --warning=WARNING  x
+  -D      --define=DEFINE    x
 ";
   assert-equal(format-to-string(expected, program-name()), synopsis);
 end;
