@@ -187,6 +187,10 @@ define test test-option-type ()
                                   help: "x",
                                   names: #("repeated-integer"),
                                   type: <integer>));
+          add-option(parser, make(<parameter-option>,
+                                  help: "x",
+                                  names: #("file-locator"),
+                                  type: <file-locator>));
           parser
         end method make-parser;
   let items = list(list("integer", "123", 123, <integer>),
@@ -198,7 +202,9 @@ define test test-option-type ()
                    list("symbol", "foo", #"foo", <symbol>),
                    list("number", "123", 123, <integer>),
                    list("real", "123", 123, <integer>),
-                   list("string", "bar", "bar", <string>));
+                   list("string", "bar", "bar", <string>),
+                   list("file-locator", "/tmp/x", as(<file-locator>, "/tmp/x"),
+                        <file-locator>));
   for (item in items)
     let (name, param, expected-value, expected-type) = apply(values, item);
     let parser = make-parser();

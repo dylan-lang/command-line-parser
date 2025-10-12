@@ -480,11 +480,16 @@ end method;
 define open generic parse-option-value
     (parameter :: <string>, type :: <type>) => (value :: <object>);
 
-// Default method just returns the value.
 define method parse-option-value
-    (param :: <string>, type :: <type>) => (value :: <string>)
-  param
-end;
+    (param :: <string>, type :: <type>) => (value :: <object>)
+  block ()
+    // If type happens to have an AS method (for example like <file-locator> does) then
+    // we will automatically support that type.
+    as(type, param)
+  exception (<error>)
+    param
+  end
+end method;
 
 // This is essentially for "float or int", which could be <real>, but
 // <number> is also a natural choice.
